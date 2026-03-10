@@ -1,0 +1,10 @@
+use airborne::{DataSet, Dispersion};
+
+
+#[test]
+fn name() {
+    let data = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
+    let dataset: DataSet<i32> = DataSet::new(data).unwrap();
+    let v = dataset.variance().unwrap();
+    assert_eq!(v, 8.25);
+}
