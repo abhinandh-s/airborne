@@ -6,6 +6,7 @@ use crate::numeric::{Numeric, to_f64_vec};
 pub trait Dispersion {
     fn mean(&self) -> Result<f64>;
     fn variance(&self) -> Result<f64>;
+   // fn covariance(&self, other: &[f64]) -> Result<f64>;
 }
 
 impl<T: Numeric, M: Marker> Dispersion for DataSet<T, M> {
