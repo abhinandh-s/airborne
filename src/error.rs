@@ -13,6 +13,10 @@ pub enum StatsError {
 
     #[error("encountered NaN or infinite value at index {index}")]
     InvalidValue { index: usize },
+
+    // risk 
+    #[error("risk-free rate is non-finite: {rate}")]
+    InvalidRiskFreeRate { rate: f64 },
 }
 
 pub type Result<T> = std::result::Result<T, StatsError>;

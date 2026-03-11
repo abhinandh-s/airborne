@@ -1,6 +1,6 @@
+#![allow(unused)]
 use num_traits::ToPrimitive;
 
-use crate::error::{Result, StatsError};
 
 pub trait Numeric:
     Copy + PartialOrd + ToPrimitive + std::fmt::Debug + Send + Sync + 'static
@@ -12,33 +12,6 @@ impl<T> Numeric for T where
 {
 }
 
-/// Convert one value, annotating the index for error messages.
-#[inline]
-pub(crate) fn to_f64_at<T: Numeric>(val: T, index: usize) -> Result<f64> {
-    val.to_f64().ok_or(StatsError::ConversionError { index })
-}
-/// Convert an entire slice to `Vec<f64>`, rejecting NaN and ±∞.
-pub(crate) fn to_f64_vec<T: Numeric>(data: &[T]) -> Result<Vec<f64>> {
-    data.iter()
-        .enumerate()
-        .map(|(index, &val)| {
-            let f = val.to_f64().ok_or(StatsError::ConversionError { index })?;
-
-            if !f.is_finite() {
-                Err(StatsError::InvalidValue { index })
-            } else {
-                Ok(f)
-            }
-        })
-        .collect()
-}
-
-/// Sort a `Vec<f64>` ascending (safe after NaN has been rejected).
-pub(crate) fn sort_asc(mut v: Vec<f64>) -> Vec<f64> {
-    // SAFETY: NaN values are rejected by to_f64_vec before reaching here.
-    v.sort_unstable_by(|a, b| a.partial_cmp(b).expect("NaN after validation"));
-    v
-}
 
 /// Compute ranks (1-based, average-rank for ties) of a sorted-index array.
 /// `data` must already be finite (NaN-free).

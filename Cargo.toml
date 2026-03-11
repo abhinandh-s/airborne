@@ -6,9 +6,22 @@ description = "A heavily-typed, generic Rust statistics library with compile-tim
 keywords    = ["statistics", "math", "generics", "sample", "population"]
 license     = "MIT"
 
+[features]
+default = []
+# default = ["precision"]
+# Switch the internal arithmetic backend from f64 to rust_decimal.
+# All public return types remain f64 - only internal precision changes.
+# Requires rust_decimal's `maths` sub-feature for sqrt, ln, exp, pow.
+precision = ["dep:rust_decimal"]
+
 [dependencies]
 num-traits = "0.2"
 thiserror  = "2.0"
+
+[dependencies.rust_decimal]
+version  = "1"
+optional = true
+features = ["maths"]
 
 [dev-dependencies]
 approx = "0.5"
