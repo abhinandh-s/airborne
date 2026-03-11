@@ -32,3 +32,18 @@ impl<T: Numeric, M: Marker> Dispersion for DataSet<T, M> {
         Ok(v.cf_sqrt().cf_to_f64())
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::DataSet;
+
+    use super::Dispersion;
+
+    // https://statisticsbyjim.com/calculators/variance-calculator/
+    #[test]
+    fn variance_t() {
+        let data: DataSet<i32> = DataSet::new([1, 2, 3, 4, 5, 6, 7, 8, 9, 0]).unwrap();
+        let variance = data.variance().unwrap();
+        assert_eq!(variance, 8.250000);
+    }
+}

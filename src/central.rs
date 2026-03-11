@@ -3,6 +3,7 @@ use crate::error::Result;
 use crate::{DataSet, Marker, Numeric, n_from_usize, n_sum};
 
 pub trait CentralTendency {
+    // ref: https://en.wikipedia.org/wiki/Arithmetic_mean
     fn mean(&self) -> Result<f64>;
 }
 
