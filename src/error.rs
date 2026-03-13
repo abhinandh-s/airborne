@@ -3,7 +3,6 @@ use thiserror::Error;
 /// All errors that can arise from statistical or financial computations.
 #[derive(Debug, Error, Clone, PartialEq)]
 pub enum StatsError {
-    // ── Core ──────────────────────────────────────────────────────────────
     #[error("dataset is empty")]
     EmptyDataset,
 
@@ -45,7 +44,6 @@ pub enum StatsError {
     #[error("lag {lag} is too large for dataset of length {n}")]
     LagTooLarge { lag: usize, n: usize },
 
-    // ── Finance ───────────────────────────────────────────────────────────
     #[error("IRR did not converge after {max_iter} iterations (last residual: {residual:.6e})")]
     IrrNoConvergence { max_iter: usize, residual: f64 },
 
