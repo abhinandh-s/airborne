@@ -31,12 +31,6 @@ jobs:
       - name: Build docs
         run: cargo doc --no-deps --document-private-items
 
-      # Optional but recommended: redirect root to crate docs
-      - name: Add redirect index
-        run: |
-          CRATE=$(basename $(ls target/doc | grep -vE 'src|static.files|search.index|settings.html|help.html|crates.js|.lock'))
-          echo "<meta http-equiv=\"refresh\" content=\"0; url=${CRATE}/index.html\">" > target/doc/index.html
-
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
