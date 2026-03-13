@@ -1,6 +1,6 @@
 use crate::compute::{ComputeFloat, N, to_n_vec};
 use crate::error::Result;
-use crate::{DataSet, Marker, Numeric, n_from_usize, n_sum};
+use crate::{DataSet, Marker, Numeric};
 
 pub trait CentralTendency {
     // ref: https://en.wikipedia.org/wiki/Arithmetic_mean

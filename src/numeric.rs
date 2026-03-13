@@ -1,7 +1,6 @@
 #![allow(unused)]
 use num_traits::ToPrimitive;
 
-
 pub trait Numeric:
     Copy + PartialOrd + ToPrimitive + std::fmt::Debug + Send + Sync + 'static
 {
@@ -11,7 +10,6 @@ impl<T> Numeric for T where
     T: Copy + PartialOrd + ToPrimitive + std::fmt::Debug + Send + Sync + 'static
 {
 }
-
 
 /// Compute ranks (1-based, average-rank for ties) of a sorted-index array.
 /// `data` must already be finite (NaN-free).

@@ -1,16 +1,16 @@
 #![allow(unused)]
-// this module provides funtions which we use for internal arithemetics  
+// this module provides funtions which we use for internal arithemetics
 //
-// All computations work through this single trait. 
-// We never call `f64` or `rust_decimal::Decimal` in any other module. 
-// 
-// ## Example 
+// All computations work through this single trait.
+// We never call `f64` or `rust_decimal::Decimal` in any other module.
+//
+// ## Example
 //
 // fn compute_something(v: f64) -> f64 {
 //      // do all the computations using `N` type
 //          `N` will deal with the Feature Flag enabled
 //
-//      N::cf_to_f64() // return as f64 
+//      N::cf_to_f64() // return as f64
 // }
 //
 use std::ops::{Add, Div, Mul, Neg, Sub};
@@ -21,7 +21,6 @@ use crate::numeric::Numeric;
 mod private {
     pub trait Sealed {}
 }
-
 
 /// Trait is essential, as `f64` and `Decimal` have different methods.
 /// A bare `type N = Decimal` can't do this job.
@@ -318,7 +317,6 @@ pub(crate) fn sort_n_asc(mut v: Vec<N>) -> Vec<N> {
     v
 }
 
-#[macro_export]
 macro_rules! n_from_f64 {
     ($val:expr) => {{
         use $crate::compute::ComputeFloat;
@@ -326,7 +324,6 @@ macro_rules! n_from_f64 {
     }};
 }
 
-#[macro_export]
 macro_rules! n_from_usize {
     ($val:expr) => {{
         use $crate::compute::ComputeFloat;
@@ -334,11 +331,17 @@ macro_rules! n_from_usize {
     }};
 }
 
-#[macro_export]
 macro_rules! n_sum {
     ($val:expr) => {{
         use $crate::compute::ComputeFloat;
         $crate::compute::N::cf_sum($val)
+    }};
+}
+
+macro_rules! n_zero {
+    () => {{
+        use $crate::compute::ComputeFloat;
+        $crate::compute::N::cf_zero()
     }};
 }
 

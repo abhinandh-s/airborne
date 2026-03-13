@@ -1,16 +1,18 @@
+use crate::DataSet;
 use crate::compute::{ComputeFloat, N, to_n_vec};
 use crate::error::Result;
 use crate::marker::Marker;
 use crate::numeric::Numeric;
-use crate::{DataSet, n_from_usize, n_sum};
 
 pub trait Dispersion {
     fn variance(&self) -> Result<f64>;
     fn std_dev(&self) -> Result<f64>;
+    // /// # Covariance
     // fn covariance(&self, other: &[f64]) -> Result<f64>;
 }
 
 impl<T: Numeric, M: Marker> DataSet<T, M> {
+    // required in std_dev
     pub(crate) fn variance_n(&self) -> Result<N> {
         let v = to_n_vec(&self.data)?;
         let n = n_from_usize!(v.len());

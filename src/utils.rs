@@ -96,23 +96,6 @@
 //     };
 // }
 //
-// /// # Covariance
-// ///
-// /// ref: https://statisticsbyjim.com/basics/covariance/
-// pub fn covariance(x: &[f64], y: &[f64], pre_computed_mean: Option<(f64, f64)>) -> f64 {
-//     let (mean_x, mean_y) = match pre_computed_mean {
-//         Some((x, y)) => (x, y),
-//         None => (mean!(x), mean!(y)),
-//     };
-//
-//     assert_eq!(x.len(), y.len());
-//     let total = x
-//         .iter()
-//         .zip(y)
-//         .map(|(xi, yi)| (xi - mean_x) * (yi - mean_y))
-//         .sum::<f64>();
-//     total / (x.len() as f64)
-// }
 //
 // /// # Covariance Macro
 // ///

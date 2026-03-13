@@ -1,5 +1,7 @@
-mod dispersion;
 mod central;
+mod correlation;
+mod dispersion;
 
-pub use dispersion::*;
 pub use central::*;
+pub use correlation::*;
+pub use dispersion::*;
