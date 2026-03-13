@@ -19,8 +19,10 @@ use crate::numeric::Numeric;
 ///
 /// ### DataSet construction
 ///
-/// ```rust,no_run
-/// // this won't compile
+/// ```ignore
+/// use airborne::DataSet;
+///
+///// this won't compile
 /// let data = DataSet::new([1, 2, 3, 4, 5]).unwrap(); // type annotations needed for `dataset::DataSet<i32, _>`
 ///                                                                // cannot satisfy `_: marker::Marker`
 /// ```
@@ -28,6 +30,8 @@ use crate::numeric::Numeric;
 /// valid constructions:
 ///
 /// ```rust
+/// use airborne::{DataSet, SampleData, PopulationData, Population, Sample};
+///
 /// fn build_data_set() {
 ///     // Same same but different!
 ///
