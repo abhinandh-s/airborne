@@ -1,7 +1,10 @@
-use crate::compute::ComputeFloat;
+use std::fmt::Display;
+use std::ops::Deref;
+
+use crate::compute::{ComputeFloat, N, to_n_vec};
 use crate::error::Result;
-use crate::n_from_f64;
-use crate::{DataSet, Dispersion, Marker, Numeric};
+use crate::{CentralTendency, DataSet, Dispersion, Marker, Numeric};
+use crate::{n_from_f64, n_from_usize};
 
 pub trait RiskMetrics<T: Numeric, M: Marker> {
     /// # Sharpe ratio
@@ -28,7 +31,67 @@ pub trait RiskMetrics<T: Numeric, M: Marker> {
     //
     // ref: [Sharpe Ratio](https://corporatefinanceinstitute.com/resources/career-map/sell-side/risk-management/sharpe-ratio-definition-formula/)
     fn sharpe_ratio(&self, risk_free: f64) -> Result<f64>;
+    fn sortino_ratio(&self, rf: f64) -> Result<f64>;
+    fn downside_deviation(&self, mar: f64) -> Result<f64>;
 }
+
+pub struct SharpeResult {
+    value: f64,
+}
+
+impl SharpeResult {
+    pub fn value(&self) -> f64 {
+        self.value
+    }
+}
+
+impl Display for SharpeResult {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "result: {}\n\n\n## Grading Thresholds\n\nLess than 1: Bad\n1 – 1.99: Adequate/good\n2 – 2.99: Very good\nGreater than 3: Excellent",
+            self.value()
+        )
+    }
+}
+
+impl Deref for SharpeResult {
+    type Target = f64;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+macro_rules! impl_result {
+    ($name:ident, $fmt:literal) => {
+        pub struct $name {
+            value: f64,
+        }
+
+        impl $name {
+            pub fn value(&self) -> f64 {
+                self.value
+            }
+        }
+
+        impl std::fmt::Display for $name {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "result: {}\n\n\n{}", self.value(), $fmt)
+            }
+        }
+
+        impl std::ops::Deref for $name {
+            type Target = f64;
+
+            fn deref(&self) -> &Self::Target {
+                &self.value
+            }
+        }
+    };
+}
+
+impl_result!(SortinoResult, "this");
 
 impl<T: Numeric, M: Marker> RiskMetrics<T, M> for DataSet<T, M> {
     fn sharpe_ratio(&self, risk_free: f64) -> Result<f64> {
@@ -46,6 +109,43 @@ impl<T: Numeric, M: Marker> RiskMetrics<T, M> for DataSet<T, M> {
         let sharpe = (portfolio_ret - n_from_f64!(risk_free)) / n_from_f64!(sd);
 
         Ok(sharpe.cf_to_f64())
+    }
+
+    fn sortino_ratio(&self, rf: f64) -> Result<f64> {
+        let d_dev = self.downside_deviation(rf)?;
+        if d_dev == 0.0 {
+            return Ok(0.0);
+        }
+
+        let m = n_from_f64!(self.mean()?);
+        let d_dev = n_from_f64!(d_dev);
+        let rf = n_from_f64!(rf);
+
+        let sortino = (m - rf) / d_dev;
+
+        Ok(sortino.cf_to_f64())
+    }
+
+    // number of observation / number of year are same as the x.len()
+    fn downside_deviation(&self, mar: f64) -> Result<f64> {
+        let no_of_year = n_from_usize!(self.len());
+        let v = to_n_vec(&self.data)?;
+
+        let result = v
+            .iter()
+            .map(|xi| {
+                let diff = xi - n_from_f64!(mar);
+                if diff.is_sign_negative() {
+                    diff * diff
+                } else {
+                    n_from_f64!(0.0)
+                }
+            })
+            .sum::<N>();
+
+        let re = (result / no_of_year).cf_sqrt();
+
+        Ok(re.cf_to_f64())
     }
 }
 
@@ -135,6 +235,7 @@ mod test {
             -3.024907069875915,  // f64
             -3.0249070698759137  // rust_decimal::Decimal
         );
+
         Ok(())
     }
 
@@ -247,22 +348,4 @@ mod test {
 //     ($rp: expr, $rf: expr, $sd: expr) => {
 //         $crate::risk_metrics::internal_sharpe(None, $rf, Some($rp), Some($sd))
 //     };
-// }
-//
-// // number of observation / number of year are same as the x.len()
-// pub fn downside_deviation(x: &[f64], mar: f64) -> f64 {
-//     let no_of_year = x.len() as f64;
-//     let result = x
-//         .iter()
-//         .map(|xi| {
-//             let diff = xi - mar;
-//             if diff.is_sign_negative() {
-//                 diff * diff
-//             } else {
-//                 0.0
-//             }
-//         })
-//         .sum::<f64>();
-//     let re = result / no_of_year;
-//     re.sqrt()
 // }

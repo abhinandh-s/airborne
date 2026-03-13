@@ -1,35 +1,38 @@
-use crate::compute::{ComputeFloat, to_n_vec};
+use crate::compute::{ComputeFloat, N, to_n_vec};
 use crate::error::Result;
 use crate::marker::Marker;
 use crate::numeric::Numeric;
-use crate::{DataSet, n_from_f64, n_from_usize, n_sum};
+use crate::{DataSet, n_from_usize, n_sum};
 
 pub trait Dispersion {
-    fn mean(&self) -> Result<f64>;
     fn variance(&self) -> Result<f64>;
     fn std_dev(&self) -> Result<f64>;
     // fn covariance(&self, other: &[f64]) -> Result<f64>;
 }
 
-impl<T: Numeric, M: Marker> Dispersion for DataSet<T, M> {
-    fn mean(&self) -> Result<f64> {
+impl<T: Numeric, M: Marker> DataSet<T, M> {
+    pub(crate) fn variance_n(&self) -> Result<N> {
         let v = to_n_vec(&self.data)?;
-        let count = n_from_usize!(self.dof_denominator()?);
-        let sum = n_sum!(v.into_iter());
-        Ok((sum / count).cf_to_f64())
+        let n = n_from_usize!(v.len());
+        let mu = n_sum!(v.iter().copied()) / n; // first pass: mean
+        let denom = n_from_usize!(self.dof_denominator()?);
+        let ss = n_sum!(v.iter().map(|&x| (x - mu).cf_powi(2))); // second pass: SS
+        Ok(ss / denom)
     }
 
+    pub(crate) fn std_dev_n(&self) -> Result<N> {
+        let v = self.variance_n()?;
+        Ok(v.cf_sqrt())
+    }
+}
+
+impl<T: Numeric, M: Marker> Dispersion for DataSet<T, M> {
     fn variance(&self) -> Result<f64> {
-        let v = to_n_vec(&self.data)?;
-        let denom = self.dof_denominator()?;
-        let mu = n_from_f64!(self.mean()?);
-        let ss = n_sum!(v.iter().map(|&x| (x - mu).cf_powi(2)));
-        Ok((ss / n_from_usize!(denom)).cf_to_f64())
+        self.variance_n().map(|v| v.cf_to_f64())
     }
 
     fn std_dev(&self) -> Result<f64> {
-        let v = n_from_f64!(self.variance()?);
-        Ok(v.cf_sqrt().cf_to_f64())
+        self.std_dev_n().map(|sd| sd.cf_to_f64())
     }
 }
 
