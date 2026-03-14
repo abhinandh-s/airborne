@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 use std::marker::PhantomData;
+use std::ops::{Deref, DerefMut};
 
 use crate::error::{Result, StatsError};
 use crate::marker::{Marker, Population, Sample};
@@ -232,4 +233,36 @@ macro_rules! data_set {
             [$($x),+]
         )
     );
+}
+
+impl<T, M> Deref for DataSet<T, M>
+where
+    T: Numeric,
+    M: Marker,
+{
+    type Target = [T];
+
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+
+impl<T, M> DerefMut for DataSet<T, M>
+where
+    T: Numeric,
+    M: Marker,
+{
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.data
+    }
+}
+
+impl<T, M> AsRef<[T]> for DataSet<T, M>
+where
+    T: Numeric,
+    M: Marker,
+{
+    fn as_ref(&self) -> &[T] {
+        &self.data
+    }
 }
