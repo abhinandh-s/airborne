@@ -29,6 +29,9 @@ pub trait CentralTendency {
     /// ## Example
     ///
     /// ```rust
+    /// use airborne::DataSet;
+    /// use crate::airborne::CentralTendency;
+    ///
     /// let data: DataSet<f64> = DataSet::new([10.0, 20.0, 30.0]).unwrap();
     /// let result = data.mean();
     ///
