@@ -26,8 +26,11 @@ fn test_downside_deviation_logic() {
     
     let d_dev = ds.downside_deviation(mar).expect("Downside dev failed");
     
-    n_assert_eq!(n_from_f64!(d_dev), 0.0111803398);
+    // Use the full precision value or the literal calculation
+    // sqrt(0.000125) is approx 0.011180339887498949
+    n_assert_eq!(n_from_f64!(d_dev), 0.011180339887498949);
 }
+
 
 #[test]
 fn test_beta_and_treynor() {
