@@ -62,3 +62,8 @@ let mu = data.mean();
 let v = data.variance();
 let cv = data.covariance();
 ```
+
+
+### test coverage
+
+src/compute is excluded
