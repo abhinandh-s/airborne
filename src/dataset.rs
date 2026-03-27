@@ -302,3 +302,138 @@ where
         &self.data
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::marker::{Sample, Population};
+
+    #[test]
+    fn test_new_success() {
+        let data = vec![1, 2, 3];
+        let ds = DataSet::<i32, Population>::new(data).unwrap();
+        assert_eq!(ds.len(), 3);
+        assert!(!ds.is_empty());
+    }
+
+    #[test]
+    fn test_new_empty_error() {
+        let data: Vec<i32> = vec![];
+        let result = DataSet::<i32, Population>::new(data);
+        assert!(result.is_err());
+        // Verify it returns StatsError::EmptyIterator
+    }
+
+    #[test]
+    fn test_push_and_extend() {
+        let mut ds = DataSet::<i32, Sample>::new([1]).unwrap();
+        ds.push(2);
+        ds.extend([3, 4]);
+        assert_eq!(ds.data, vec![1, 2, 3, 4]);
+    }
+
+    #[test]
+    fn test_dof_denominator() {
+        // Population DOF_OFFSET is usually 0
+        let pop = DataSet::<i32, Population>::new([10, 20]).unwrap();
+        assert_eq!(pop.dof_denominator().unwrap(), 2);
+
+        // Sample DOF_OFFSET is usually 1
+        let samp = DataSet::<i32, Sample>::new([10, 20]).unwrap();
+        assert_eq!(samp.dof_denominator().unwrap(), 1);
+
+        // Test InsufficientData error
+        let tiny_samp = DataSet::<i32, Sample>::new([10]).unwrap();
+        assert!(tiny_samp.dof_denominator().is_err());
+    }
+
+    #[test]
+    fn test_conversions_reinterpret() {
+        let ds = DataSet::<i32, Population>::new([1, 2]).unwrap();
+        
+        // Test into_ conversions (consuming)
+        let sample = ds.into_sample();
+        assert_eq!(sample.marker_name(), "Sample");
+        
+        let pop = sample.into_population();
+        assert_eq!(pop.marker_name(), "Population");
+
+        // Test clone conversions (non-consuming)
+        let s_clone = pop.as_sample_clone();
+        let p_clone = s_clone.as_population_clone();
+        
+        assert_eq!(p_clone.len(), 2);
+    }
+
+    #[test]
+    fn test_to_n_vec_and_iter() {
+        let ds = DataSet::<f64, Population>::new([1.1, 2.2]).unwrap();
+        
+        // Test successful conversion
+        let n_vec = ds.to_n_vec().unwrap();
+        assert_eq!(n_vec.len(), 2);
+
+        // Test internal iter (usually used after validation)
+        let n_iter_count = ds.to_n_iter().count();
+        assert_eq!(n_iter_count, 2);
+    }
+
+    #[test]
+    fn test_formatting_traits() {
+        let ds = DataSet::<i32, Population>::new([1, 2]).unwrap();
+        
+        // Debug
+        let debug_str = format!("{:?}", ds);
+        assert!(debug_str.contains("DataSet<Population>([1, 2])"));
+
+        // Display
+        let display_str = format!("{}", ds);
+        assert_eq!(display_str, "DataSet<Population>[n=2]");
+    }
+
+    #[test]
+    fn test_deref_and_slices() {
+        let mut ds = DataSet::<i32, Population>::new([1, 2, 3]).unwrap();
+        
+        // Deref to slice
+        assert_eq!(ds.as_slice(), &[1, 2, 3]);
+        assert_eq!(ds.len(), 3);
+        
+        // DerefMut
+        ds[0] = 10;
+        assert_eq!(ds[0], 10);
+        
+        // AsRef
+        let r: &[i32] = ds.as_ref();
+        assert_eq!(r[0], 10);
+    }
+
+    #[test]
+    fn test_iterators() {
+        let ds = DataSet::<i32, Population>::new([1, 2]).unwrap();
+
+        // Ref Iterator
+        for val in &ds {
+            assert!(*val > 0);
+        }
+
+        // IntoIterator (consuming)
+        let vec: Vec<i32> = ds.into_iter().collect();
+        assert_eq!(vec, vec![1, 2]);
+    }
+
+    #[test]
+    fn test_macro_construction() {
+        let ds: Result<DataSet<i32, Population>> = data_set![1, 2, 3];
+        assert!(ds.is_ok());
+        assert_eq!(ds.unwrap().len(), 3);
+    }
+
+    #[test]
+    fn test_into_vec() {
+        let ds = DataSet::<i32, Population>::new([1, 2]).unwrap();
+        let v = ds.into_vec();
+        assert_eq!(v, vec![1, 2]);
+    }
+}
