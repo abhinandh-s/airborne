@@ -368,15 +368,85 @@ macro_rules! n_assert_eq {
     }};
 }
 
+
+
+
 #[cfg(test)]
-mod test {
-    use crate::compute::{ComputeFloat, N};
+mod tests {
+    use super::*;
 
     #[test]
-    fn add_zero() {
-        let x = n_from_f64!(3.7);
-        n_assert_eq!(x + n_zero!(), 3.7);
-        assert_eq!((x + N::cf_zero()).cf_to_f64(), x.cf_to_f64());
-        assert_eq!((N::cf_zero() + x).cf_to_f64(), x.cf_to_f64());
+    fn test_constants() {
+        assert_eq!(N::cf_to_f64(N::cf_zero()), 0.0);
+        assert_eq!(N::cf_to_f64(N::cf_one()), 1.0);
+        assert_eq!(N::cf_to_f64(N::cf_hundred()), 100.0);
+    }
+
+    #[test]
+    fn test_basic_arithmetic() {
+        let a = n_from_f64!(10.5);
+        let b = n_from_f64!(2.0);
+
+        let sum = a + b;
+        let diff = a - b;
+        let prod = a * b;
+        let quot = a / b;
+
+        n_assert_eq!(sum, 12.5);
+        n_assert_eq!(diff, 8.5);
+        n_assert_eq!(prod, 21.0);
+        n_assert_eq!(quot, 5.25);
+    }
+
+    #[test]
+    fn test_math_functions() {
+        let val = n_from_f64!(16.0);
+        let root = val.cf_sqrt();
+        n_assert_eq!(root, 4.0);
+
+        let neg = n_from_f64!(-5.0);
+        n_assert_eq!(neg.cf_abs(), 5.0);
+    }
+
+    #[test]
+    fn test_to_n_vec() {
+        let data = vec![1.0, 2.0, 3.0];
+        let result = to_n_vec(&data).expect("Conversion failed");
+        
+        assert_eq!(result.len(), 3);
+        n_assert_eq!(result[0], 1.0);
+        n_assert_eq!(result[2], 3.0);
+    }
+
+    #[test]
+    fn test_to_n_vec_empty() {
+        let data: Vec<f64> = vec![];
+        let result = to_n_vec(&data);
+        assert!(matches!(result, Err(StatsError::EmptyIterator)));
+    }
+
+    #[test]
+    #[cfg(not(feature = "precision"))]
+    fn test_invalid_floats_fail() {
+        let data = vec![f64::NAN];
+        let result = to_n_vec(&data);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_sum_macro() {
+        let vals = vec![n_from_f64!(1.0), n_from_f64!(2.0), n_from_f64!(3.0)];
+        let total = n_sum!(vals.into_iter());
+        n_assert_eq!(total, 6.0);
+    }
+
+    #[test]
+    fn test_sort_asc() {
+        let v = vec![n_from_f64!(10.0), n_from_f64!(2.0), n_from_f64!(5.0)];
+        let sorted = sort_n_asc(v);
+        
+        n_assert_eq!(sorted[0], 2.0);
+        n_assert_eq!(sorted[1], 5.0);
+        n_assert_eq!(sorted[2], 10.0);
     }
 }
