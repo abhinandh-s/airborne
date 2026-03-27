@@ -70,12 +70,12 @@ impl Deref for SharpeResult {
 macro_rules! impl_result {
     ($name:ident, $fmt:literal) => {
         pub struct $name {
-            value: f64,
+            pub(crate) value: f64,
         }
 
         impl $name {
             pub fn value(&self) -> f64 {
-                pub(crate) self.value
+                self.value
             }
         }
 
