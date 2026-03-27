@@ -2,6 +2,7 @@ use std::fmt::Debug;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
+use crate::compute::{ComputeFloat, N};
 use crate::error::{Result, StatsError};
 use crate::marker::{Marker, Population, Sample};
 use crate::numeric::Numeric;
@@ -147,6 +148,41 @@ impl<T: Numeric, M: Marker> DataSet<T, M> {
         }
 
         Ok(n - offset)
+    }
+    
+    pub fn dof_denominator_n(&self) -> Result<N> {
+        self.dof_denominator().map(N::cf_from_usize)
+    }
+
+    #[inline]
+    pub(crate) fn len_n(&self) -> N {
+        N::cf_from_usize(self.data.len())
+    }
+    
+    /// Convert `DataSet` to `Vec<N>`
+    /// This is the single entry point for all functions.
+    pub(crate) fn to_n_vec(&self) -> Result<Vec<N>> {
+        self.data
+            .iter()
+            .enumerate()
+            .map(|(i, &v)| {
+                let f = v.to_f64().ok_or(StatsError::ConversionError { index: i })?;
+                if !f.is_finite() {
+                    return Err(StatsError::InvalidValue { index: i });
+                }
+                Ok(N::cf_from_f64(f))
+            })
+            .collect()
+    }
+
+    // Lazy iterator variant
+    // to be used when we don't need random access.
+    pub(crate) fn to_n_iter(&self) -> impl Iterator<Item = N> {
+            self.data.iter().map(|&v| {
+                // NaN/inf is already validated by `to_n_vec` as public boundary.
+                // this is for internal chaining after validation.
+                N::cf_from_f64(v.to_f64().expect("validated"))
+            })
     }
 }
 

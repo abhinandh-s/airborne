@@ -3,7 +3,10 @@ use std::ops::Deref;
 
 use crate::compute::{ComputeFloat, N, to_n_vec};
 use crate::error::Result;
-use crate::{CentralTendency, DataSet, Dispersion, Marker, Numeric, StatsError};
+use crate::{
+    CentralTendency, DataSet, Dispersion, Marker, Numeric, StatsError, covariance_n, mean_n,
+    variance_n,
+};
 
 pub trait RiskMetrics<T: Numeric, M: Marker> {
     /// # Sharpe ratio
@@ -162,7 +165,8 @@ impl<T: Numeric, M: Marker> RiskMetrics<T, M> for DataSet<T, M> {
             return Err(StatsError::ZeroVariance);
         }
 
-        let mu = self.mean_n()?;
+        let n = self.to_n_vec()?;
+        let mu = mean_n(&n);
         let rf = n_from_f64!(risk_free);
         let t = (mu - rf) / b;
 
@@ -176,13 +180,16 @@ impl<T: Numeric, M: Marker> RiskMetrics<T, M> for DataSet<T, M> {
 
 impl<T: Numeric, M: Marker> DataSet<T, M> {
     fn beta_n(&self, benchmark: &DataSet<T, M>) -> Result<N> {
+        let dof = self.dof_denominator_n()?;
+        let self_n = self.to_n_vec()?;
+        let benchmark_n = benchmark.to_n_vec()?;
         if self.len() != benchmark.len() {
             return Err(StatsError::InvalidBenchmark);
         }
         // Fully reuses existing Correlation + Dispersion trait impls.
         // M::DOF_OFFSET propagates through both cov and var and cancels.
-        let cov = self.covariance_n(benchmark)?;
-        let var_b = benchmark.variance_n()?;
+        let cov = covariance_n(&self_n, &benchmark_n, dof);
+        let var_b = variance_n(&benchmark_n, dof);
         if var_b == N::cf_zero() {
             return Err(StatsError::ZeroVariance);
         }

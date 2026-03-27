@@ -348,56 +348,6 @@ macro_rules! n_zero {
     }};
 }
 
-pub(crate) trait NExt {
-    fn len_n(&self) -> N;
-    fn to_n_vec(&self) -> Result<Vec<N>> {
-        todo!()
-    }
-}
-
-/// data.iter().len_n()
-impl<I> NExt for I
-where
-    I: ExactSizeIterator,
-{
-    #[inline]
-    fn len_n(&self) -> N {
-        n_from_usize!(self.len())
-    }
-}
-
-/// data.len_n()
-impl<I> NExt for [I]
-where
-    I: Numeric,
-{
-    #[inline]
-    fn len_n(&self) -> N {
-        n_from_usize!(self.len())
-    }
-
-    fn to_n_vec(&self) -> Result<Vec<N>> {
-        /// Convert an entire slice to `Vec<f64>`, rejecting NaN and ±∞.
-        // pub(crate) fn to_n_vec<T: Numeric>(data: &[T]) -> Result<Vec<N>> {
-        if self.is_empty() {
-            return Err(StatsError::EmptyIterator);
-        }
-        self.iter()
-            .enumerate()
-            .map(|(index, &val)| {
-                let f = to_n(val, index)?;
-
-                // Only f64 can be non-finite; Decimal cannot.
-                #[cfg(not(feature = "precision"))]
-                if !f.cf_is_finite() {
-                    return Err(StatsError::InvalidValue { index });
-                }
-                Ok(f)
-            })
-            .collect()
-    }
-}
-
 /// where,
 ///     a = N
 ///     b = f64
