@@ -1,4 +1,4 @@
-name: Deploy Rust Docs to Pages
+name: Publish Docs
 
 on:
   push:
