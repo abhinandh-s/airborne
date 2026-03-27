@@ -3,8 +3,8 @@ use thiserror::Error;
 /// All errors that can arise from statistical or financial computations.
 #[derive(Debug, Error, Clone, PartialEq)]
 pub enum StatsError {
-    #[error("dataset is empty")]
-    EmptyDataset,
+    #[error("iterator is empty")]
+    EmptyIterator,
 
     #[error("insufficient data: need at least {needed} elements, got {got}")]
     InsufficientData { needed: usize, got: usize },

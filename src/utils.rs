@@ -1,31 +1,4 @@
-// /// # Arithmetic mean
-// ///
-// /// formula: mean = total / n
-// pub fn mean(series: &[f64]) -> f64 {
-//     let n = series.len() as f64;
-//     series.iter().sum::<f64>() / n
-// }
-//
-// /// # Arithmetic Mean Macro
-// ///
-// /// Calculates the average of a given slice of `f64`.
-// ///
-// /// ## Usage
-// /// ```rust
-// /// use airborne::mean;
-// ///
-// /// let data = [10.0, 20.0, 30.0];
-// /// let result = mean!(&data);
-// ///
-// /// assert_eq!(result, 20.0);
-// /// ```
-// #[macro_export]
-// macro_rules! mean {
-//     ($series: expr) => {
-//         $crate::mean($series)
-//     };
-// }
-//
+
 // /// # Variance
 // ///
 // /// The average of the squared differences from the Mean.

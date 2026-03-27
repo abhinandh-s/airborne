@@ -113,7 +113,7 @@ impl<T: Numeric, M: Marker> DataSet<T, M> {
     pub fn new(data: impl IntoIterator<Item = T>) -> Result<Self> {
         let data: Vec<T> = data.into_iter().collect();
         if data.is_empty() {
-            return Err(StatsError::EmptyDataset);
+            return Err(StatsError::EmptyIterator);
         }
         Ok(Self {
             data,
