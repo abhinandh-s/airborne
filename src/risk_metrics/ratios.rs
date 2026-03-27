@@ -40,7 +40,7 @@ pub trait RiskMetrics<T: Numeric, M: Marker> {
 }
 
 pub struct SharpeResult {
-    value: f64,
+    pub(crate) value: f64,
 }
 
 impl SharpeResult {
@@ -75,7 +75,7 @@ macro_rules! impl_result {
 
         impl $name {
             pub fn value(&self) -> f64 {
-                self.value
+                pub(crate) self.value
             }
         }
 
