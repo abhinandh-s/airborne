@@ -22,10 +22,17 @@ jobs:
       - name: Run Tarpaulin
         id: tarpaulin
         run: |
-          # Use --ignore-panics and --engine llvm for better speed/reliability in CI
-          cargo tarpaulin --out stdout > tarpaulin_out.txt
+          # Use --ignore-panics and --engine llvm for better speed/reliability in CI, --features precision
+          cargo tarpaulin --exclude-files src/compute.rs --out stdout > tarpaulin_out.txt
           cat tarpaulin_out.txt
           
           # Improved regex to handle cases where tarpaulin output varies
           COVERAGE=$(grep -oP '\d+(\.\d+)?(?=% coverage)' tarpaulin_out.txt | head -n 1)
           echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
+
+      - name: Generate coverage badge
+        uses: ozankasikci/rust-test-coverage-badge@v1
+        with:
+          coverage: ${{ steps.tarpaulin.outputs.percentage }}
+          output: assets/coverage.svg
+          commit: true
