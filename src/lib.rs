@@ -44,7 +44,11 @@ mod numeric;
 #[macro_use] // pub(crate) but for macros,
 // macros are now available for all modules bellow
 pub(crate) mod compute;
+
+#[macro_use] // pub(crate) but for macros,
 mod dataset;
+pub use dataset::*;
+
 pub mod error;
 mod marker;
 mod risk_metrics;
@@ -54,7 +58,6 @@ pub mod stats;
 
 pub use stats::*;
 
-pub use dataset::{DataSet, PopulationData, SampleData};
 pub use error::{Result, StatsError};
 pub use marker::{Marker, Population, Sample};
 pub use numeric::Numeric;
