@@ -1,5 +1,7 @@
 use thiserror::Error;
 
+use crate::compute::N;
+
 /// All errors that can arise from statistical or financial computations.
 #[derive(Debug, Error, Clone, PartialEq)]
 pub enum StatsError {
@@ -73,3 +75,12 @@ pub enum StatsError {
 }
 
 pub type Result<T> = std::result::Result<T, StatsError>;
+
+pub(crate) fn check_empty_set(s: &[N]) -> Result<()> {
+    if s.is_empty() {
+        return Err(StatsError::EmptyIterator);
+    }
+    Ok(())
+}
+
+

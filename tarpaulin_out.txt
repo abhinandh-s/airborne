@@ -1,0 +1,62 @@
+[2m2026-03-29T14:40:34.915327Z[0m [32m INFO[0m [2mcargo_tarpaulin::config[0m[2m:[0m Creating config
+[2m2026-03-29T14:40:34.946235Z[0m [32m INFO[0m [2mcargo_tarpaulin[0m[2m:[0m Running Tarpaulin
+[2m2026-03-29T14:40:34.946262Z[0m [32m INFO[0m [2mcargo_tarpaulin[0m[2m:[0m Building project
+[2m2026-03-29T14:40:34.946396Z[0m [32m INFO[0m [2mcargo_tarpaulin::cargo[0m[2m:[0m Cleaning project
+[2m2026-03-29T14:40:39.797746Z[0m [32m INFO[0m [2mcargo_tarpaulin::process_handling::linux[0m[2m:[0m Launching test
+[2m2026-03-29T14:40:39.797791Z[0m [32m INFO[0m [2mcargo_tarpaulin::process_handling[0m[2m:[0m running /home/abhi/.cargo/__cache/target/debug/deps/dispersion-3fe1634817c8105f
+
+running 1 test
+test name ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[2m2026-03-29T14:40:40.399743Z[0m [32m INFO[0m [2mcargo_tarpaulin::process_handling::linux[0m[2m:[0m Launching test
+[2m2026-03-29T14:40:40.399781Z[0m [32m INFO[0m [2mcargo_tarpaulin::process_handling[0m[2m:[0m running /home/abhi/.cargo/__cache/target/debug/deps/airborne-eeecd240769f4a61
+
+running 29 tests
+test compute::test::add_zero ... ok
+test dataset::tests::test_formatting_traits ... ok
+test dataset::tests::test_into_vec ... ok
+test dataset::tests::test_iterators ... ok
+test dataset::tests::test_deref_and_slices ... ok
+test dataset::tests::test_conversions_reinterpret ... ok
+test dataset::tests::test_macro_construction ... ok
+test dataset::tests::test_new_empty_error ... ok
+test dataset::tests::test_new_success ... ok
+test dataset::tests::test_push_and_extend ... ok
+test dataset::tests::test_dof_denominator ... ok
+test numeric::tests::test_ranks_empty ... ok
+test numeric::tests::test_ranks_mixed_ties ... ok
+test numeric::tests::test_ranks_distinct_values ... ok
+test numeric::tests::test_ranks_single_element ... ok
+test numeric::tests::test_ranks_panics_on_nan - should panic ... ok
+test numeric::tests::test_ranks_unsorted_with_ties ... ok
+test numeric::tests::test_ranks_all_ties ... ok
+test dataset::tests::test_to_n_vec_and_iter ... ok
+test risk_metrics::test::test_display_implementation ... ok
+test risk_metrics::test::test_error_on_invalid_rf ... ok
+test risk_metrics::test::test_downside_deviation_logic ... ok
+test stats::central::tests::test_mean_basic ... ok
+test stats::central::tests::test_mean_empty ... ok
+test risk_metrics::ratios::test::sharpe_t ... ok
+test risk_metrics::test::test_sharpe_ratio_basic ... ok
+test stats::dispersion::test::variance_t ... ok
+test risk_metrics::test::test_beta_and_treynor ... ok
+test stats::dispersion::test::std_dev_t ... ok
+
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+[2m2026-03-29T14:40:41.069640Z[0m [32m INFO[0m [2mcargo_tarpaulin::report[0m[2m:[0m Coverage Results:
+|| Uncovered Lines:
+|| src/dataset.rs: 121, 127, 145-146, 158-159, 171
+|| src/risk_metrics/ratios.rs: 77-78, 83-84, 91, 108, 120-123, 126-128, 130, 132, 160, 165, 187, 194
+|| src/stats/correlation.rs: 16-20, 23-26, 28-32
+|| Tested/Total Lines:
+|| src/dataset.rs: 60/67 +0.00%
+|| src/numeric.rs: 15/15 +0.00%
+|| src/risk_metrics/ratios.rs: 47/66 +0.00%
+|| src/stats/central.rs: 6/6 +0.00%
+|| src/stats/correlation.rs: 5/19 +0.00%
+|| src/stats/dispersion.rs: 14/14 +0.00%
+|| 
+78.61% coverage, 147/187 lines covered, +0.00% change in coverage

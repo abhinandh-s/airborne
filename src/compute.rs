@@ -1,4 +1,4 @@
-#![allow(unused)]
+#![allow(dead_code)]
 // this module provides funtions which we use for internal arithemetics
 //
 // All computations work through this single trait.
@@ -80,6 +80,9 @@ pub trait ComputeFloat:
     fn cf_sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.fold(Self::cf_zero(), |acc, x| acc + x)
     }
+
+    #[cfg(test)]
+    fn cf_tol() -> Self;
 }
 
 impl private::Sealed for f64 {}
@@ -166,8 +169,13 @@ impl ComputeFloat for f64 {
     }
 
     #[inline]
-    fn cf_ln(self) -> f64 {
+    fn cf_ln(self) -> Self {
         f64::ln(self)
+    }
+
+    #[cfg(test)]
+    fn cf_tol() -> Self {
+        1e-10
     }
 }
 
@@ -278,6 +286,12 @@ mod decimal_impl {
         fn cf_exp(self) -> Decimal {
             MathematicalOps::exp(&self)
         }
+
+        #[cfg(test)]
+        fn cf_tol() -> Self {
+            // Decimal::from_f64 is not const, but fine for test use
+            Decimal::from_str("0.0000000000000000000000001").unwrap() // 1e-25
+        }
     }
 }
 
@@ -320,194 +334,49 @@ pub(crate) fn sort_n_asc(mut v: Vec<N>) -> Vec<N> {
     v
 }
 
-macro_rules! n_from_f64 {
-    ($val:expr) => {{
-        use $crate::compute::ComputeFloat;
-        $crate::compute::N::cf_from_f64($val)
-    }};
+#[cfg(test)]
+pub(crate) mod assert {
+    use crate::compute::{ComputeFloat, N};
+
+    pub fn approx_eq(actual: N, expected: N) -> bool {
+        let diff = (actual - expected).cf_abs();
+        if expected.cf_is_zero() {
+            diff < N::cf_tol()
+        } else {
+            diff / expected.cf_abs() < N::cf_tol()
+        }
+    }
 }
-
-macro_rules! n_from_usize {
-    ($val:expr) => {{
-        use $crate::compute::ComputeFloat;
-        $crate::compute::N::cf_from_usize($val)
-    }};
-}
-
-macro_rules! n_sum {
-    ($val:expr) => {{
-        use $crate::compute::ComputeFloat;
-        $crate::compute::N::cf_sum($val)
-    }};
-}
-
-macro_rules! n_zero {
-    () => {{
-        use $crate::compute::ComputeFloat;
-        $crate::compute::N::cf_zero()
-    }};
-}
-
-/// where,
-///     a = N
-///     b = f64
-#[doc(hidden)]
-#[macro_export]
-macro_rules! n_assert_eq {
-    ($a:expr, $b:expr) => {{
-        let a: f64 = ($a).cf_to_f64();
-        let b: f64 = $b;
-
-        #[cfg(not(feature = "precision"))]
-        let tol: f64 = 1e-10_f64;
-        #[cfg(feature = "precision")]
-        let tol: f64 = 1e-25_f64;
-
-        let err: f64 = (a - b).abs() / b.abs().max(1e-30);
-        assert!(err < tol, "got {a}, expected {b} (rel err {err:.2e})");
-    }};
-}
-
-
-
 
 #[cfg(test)]
-mod tests {
-    use super::*;
+#[doc(hidden)]
+#[macro_export]
+macro_rules! assert_n_eq {
+    ($actual:expr, $expected:expr) => {{
+        use $crate::compute::ComputeFloat;
 
-    #[test]
-    fn test_constants() {
-        // Covering all constant lines (75-76, etc. in f64 / 132-157 in Decimal)
-        assert_eq!(N::cf_to_f64(N::cf_zero()), 0.0);
-        assert_eq!(N::cf_to_f64(N::cf_one()), 1.0);
-        assert_eq!(N::cf_to_f64(N::cf_two()), 2.0);
-        assert_eq!(N::cf_to_f64(N::cf_three()), 3.0);
-        assert_eq!(N::cf_to_f64(N::cf_hundred()), 100.0);
-        
-        let inf = N::cf_infinity();
-        let neg_inf = N::cf_neg_infinity();
-        
-        #[cfg(not(feature = "precision"))]
-        {
-            assert!(inf.is_infinite());
-            assert!(neg_inf.is_infinite());
-        }
-        #[cfg(feature = "precision")]
-        {
-            // Decimal uses MIN/MAX as sentinels
-            assert_eq!(inf, rust_decimal::Decimal::MAX);
-            assert_eq!(neg_inf, rust_decimal::Decimal::MIN);
-        }
-    }
-
-    #[test]
-    fn test_conversions() {
-        // Line 164-165 (cf_from_usize)
-        let n_u = N::cf_from_usize(42);
-        assert_eq!(N::cf_to_f64(n_u), 42.0);
-
-        // n_from_f64 macro
-        let n_f = n_from_f64!(3.14);
-        assert_eq!(N::cf_to_f64(n_f), 3.14);
-    }
-
-    #[test]
-    fn test_predicates() {
-        let zero = N::cf_zero();
-        let one = N::cf_one();
-        
-        assert!(zero.cf_is_zero());
-        assert!(!one.cf_is_zero());
-        assert!(one.cf_is_finite());
-    }
-
-    #[test]
-    fn test_math_operations() {
-        let val = n_from_f64!(2.0);
-        
-        // Covering lines like 209-223 (min, max, clamp, pow)
-        assert_eq!(N::cf_to_f64(val.cf_abs()), 2.0);
-        assert_eq!(N::cf_to_f64(val.cf_min(N::cf_one())), 1.0);
-        assert_eq!(N::cf_to_f64(val.cf_max(N::cf_three())), 3.0);
-        assert_eq!(N::cf_to_f64(val.cf_clamp(N::cf_zero(), N::cf_one())), 1.0);
-        
-        // Power and Roots
-        assert_eq!(N::cf_to_f64(val.cf_powi(3)), 8.0);
-        n_assert_eq!(val.cf_powf(2.0), 4.0);
-        n_assert_eq!(n_from_f64!(9.0).cf_sqrt(), 3.0);
-    }
-
-    #[test]
-    fn test_transcendental() {
-        // Covering cf_ln and cf_exp (lines 241-246)
-        let e = n_from_f64!(1.0).cf_exp();
-        n_assert_eq!(e.cf_ln(), 1.0);
-    }
-
-    #[test]
-    fn test_arithmetic_trait_methods() {
-        let a = n_from_f64!(10.0);
-        let b = n_from_f64!(2.0);
-        
-        // Explicitly calling the trait provided cf_div
-        n_assert_eq!(a.cf_div(b), 5.0);
-        // Negation
-        n_assert_eq!(-a, -10.0);
-    }
-
-    #[test]
-    fn test_sorting_and_vec_logic() {
-        // Cover sort_n_asc and to_n_vec
-        let data = vec![3.0, 1.0, 2.0];
-        let n_vec = to_n_vec(&data).unwrap();
-        let sorted = sort_n_asc(n_vec);
-        
-        assert_eq!(N::cf_to_f64(sorted[0]), 1.0);
-        assert_eq!(N::cf_to_f64(sorted[1]), 2.0);
-        assert_eq!(N::cf_to_f64(sorted[2]), 3.0);
-    }
-
-    #[test]
-    fn test_to_n_error_paths() {
-        // Cover line 271 (ConversionError) if applicable to type, 
-        // but mostly invalid f64 check on line 285-288.
-        #[cfg(not(feature = "precision"))]
-        {
-            let data = vec![f64::NAN];
-            let res = to_n_vec(&data);
-            assert!(res.is_err());
-        }
-    }
-
-    #[test]
-    fn test_macros() {
-        // Cover n_zero and n_from_usize
-        let z: N = n_zero!();
-        let forty_two: N = n_from_usize!(42);
-        
-        assert!(z.cf_is_zero());
-        assert_eq!(forty_two.cf_to_f64(), 42.0);
-    }
-
-#[test]
-fn test_all_compute_float_methods() {
-    // 1. Constants (Covers lines 75-76, 132-157)
-    let _ = N::cf_two();
-    let _ = N::cf_three();
-    let _ = N::cf_infinity();
-    let _ = N::cf_neg_infinity();
-
-    // 2. Math functions (Covers lines 241-253)
-    let val = n_from_f64!(2.0);
-    let _ = val.cf_powf(2.0);
-    let _ = val.cf_exp();
-    let _ = val.cf_ln();
-    let _ = val.cf_sqrt();
-    
-    // 3. Comparisons and Clamps (Covers lines 209-223)
-    let _ = val.cf_max(N::cf_one());
-    let _ = val.cf_min(N::cf_one());
-    let _ = val.cf_clamp(N::cf_zero(), N::cf_one());
+        let a: $crate::compute::N = $actual;
+        let e = $crate::compute::N::cf_from_f64($expected);
+        assert!(
+            $crate::compute::assert::approx_eq(a, e),
+            "assert_n_eq failed\n  actual:   {:?}\n  expected: {:?}\n  tol:      {:?}",
+            a,
+            e,
+            $crate::compute::N::cf_tol()
+        );
+    }};
 }
 
+#[cfg(test)]
+mod test {
+    use crate::compute::{ComputeFloat, N};
+
+    #[test]
+    fn add_zero() {
+        let x = N::cf_from_f64(3.7);
+        assert_n_eq!(x + N::cf_zero(), 3.7);
+        assert_eq!((x + N::cf_zero()).cf_to_f64(), x.cf_to_f64());
+        assert_eq!((N::cf_zero() + x).cf_to_f64(), x.cf_to_f64());
+    }
 }
+

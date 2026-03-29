@@ -1,4 +1,3 @@
-
 // /// # Variance
 // ///
 // /// The average of the squared differences from the Mean.

@@ -109,8 +109,8 @@ impl<T: Numeric, M: Marker> RiskMetrics<T, M> for DataSet<T, M> {
         }
 
         // computation only via type N
-        let portfolio_ret = n_from_f64!(self.mean()?);
-        let sharpe = (portfolio_ret - n_from_f64!(risk_free)) / n_from_f64!(sd);
+        let portfolio_ret = N::cf_from_f64(self.mean()?);
+        let sharpe = (portfolio_ret - N::cf_from_f64(risk_free)) / N::cf_from_f64(sd);
 
         Ok(SharpeResult {
             value: sharpe.cf_to_f64(),
@@ -123,9 +123,9 @@ impl<T: Numeric, M: Marker> RiskMetrics<T, M> for DataSet<T, M> {
             return Ok(0.0);
         }
 
-        let m = n_from_f64!(self.mean()?);
-        let d_dev = n_from_f64!(d_dev);
-        let rf = n_from_f64!(rf);
+        let m = N::cf_from_f64(self.mean()?);
+        let d_dev = N::cf_from_f64(d_dev);
+        let rf = N::cf_from_f64(rf);
 
         let sortino = (m - rf) / d_dev;
 
@@ -135,8 +135,8 @@ impl<T: Numeric, M: Marker> RiskMetrics<T, M> for DataSet<T, M> {
     // number of observation / number of year are same as the x.len()
     fn downside_deviation(&self, mar: f64) -> Result<f64> {
         let v = to_n_vec(&self.data)?;
-        let n = n_from_usize!(self.len());
-        let mar = n_from_f64!(mar);
+        let n = self.len_n();
+        let mar = N::cf_from_f64(mar);
 
         let result = v
             .iter()
@@ -145,7 +145,7 @@ impl<T: Numeric, M: Marker> RiskMetrics<T, M> for DataSet<T, M> {
                 if diff.is_sign_negative() {
                     diff * diff
                 } else {
-                    n_from_f64!(0.0)
+                    N::cf_from_f64(0.0)
                 }
             })
             .sum::<N>();
@@ -161,20 +161,20 @@ impl<T: Numeric, M: Marker> RiskMetrics<T, M> for DataSet<T, M> {
         }
 
         let b = self.beta_n(benchmark)?;
-        if b == n_zero!() {
+        if b == N::cf_zero() {
             return Err(StatsError::ZeroVariance);
         }
 
         let n = self.to_n_vec()?;
         let mu = mean_n(&n);
-        let rf = n_from_f64!(risk_free);
+        let rf = N::cf_from_f64(risk_free);
         let t = (mu - rf) / b;
 
         Ok(t.cf_to_f64())
     }
 
     fn beta(&self, benchmark: &DataSet<T, M>) -> Result<f64> {
-        self.beta_n(benchmark).map(|b| b.cf_to_f64())
+        self.beta_n(benchmark).map(ComputeFloat::cf_to_f64)
     }
 }
 
@@ -188,8 +188,8 @@ impl<T: Numeric, M: Marker> DataSet<T, M> {
         }
         // Fully reuses existing Correlation + Dispersion trait impls.
         // M::DOF_OFFSET propagates through both cov and var and cancels.
-        let cov = covariance_n(&self_n, &benchmark_n, dof);
-        let var_b = variance_n(&benchmark_n, dof);
+        let cov = covariance_n(&self_n, &benchmark_n, dof)?;
+        let (_, var_b) = variance_n(&benchmark_n, dof)?;
         if var_b == N::cf_zero() {
             return Err(StatsError::ZeroVariance);
         }

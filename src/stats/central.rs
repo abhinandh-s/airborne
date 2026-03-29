@@ -38,9 +38,9 @@ pub trait CentralTendency {
     /// assert_eq!(result, Ok(20.0));
     /// ```
     ///
-    /// # Error 
+    /// # Error
     ///
-    /// returns error if value in data set 
+    /// returns error if value in data set
     ///     1. is finite
     ///     2. can't be convert to f64
     //
@@ -69,8 +69,6 @@ pub(crate) fn mean_n(series: &[N]) -> N {
     sum / N::cf_from_usize(series.len())
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -81,9 +79,9 @@ mod tests {
         let data = vec![1.0, 2.0, 3.0];
         // Explicitly type the DataSet to help the compiler
         let ds: DataSet<f64, Population> = DataSet::new(data).unwrap();
-        
+
         let result = ds.mean().unwrap();
-        n_assert_eq!(n_from_f64!(result), 2.0);
+        assert_n_eq!(N::cf_from_f64(result), 2.0);
     }
 
     #[test]

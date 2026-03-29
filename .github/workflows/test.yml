@@ -2,7 +2,6 @@ name: Cargo Test
 
 on:
   push:
-    branches: ["*"]
   pull_request:
   workflow_dispatch:
 
@@ -22,7 +21,8 @@ jobs:
             toolchain: stable
             override: true
 
-      - name: Cargo Test
+      - name: Cargo Test (no precision flag)
         run: cargo test 
 
-   # do one more test with --features precision 
+      - name: Cargo Test (with precision features flag)
+        run: cargo test cargo t -F precision

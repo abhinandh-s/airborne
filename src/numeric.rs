@@ -42,7 +42,6 @@ pub(crate) fn ranks(data: &[f64]) -> Vec<f64> {
     rank_vec
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -85,7 +84,7 @@ mod tests {
         // 1.0 (idx 0), 2.0 (idx 1), 2.0 (idx 2), 3.0 (idx 3), 3.0 (idx 4), 3.0 (idx 5)
         let data = [1.0, 2.0, 2.0, 3.0, 3.0, 3.0];
         let result = ranks(&data);
-        
+
         // 1.0: rank 1.0
         // 2.0: average of rank 2 and 3 = 2.5
         // 3.0: average of rank 4, 5, and 6 = (4 + 6) / 2 = 5.0

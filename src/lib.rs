@@ -2,17 +2,10 @@
 //!
 //!  A Heavily-Typed Rust Statistics & Finance Library
 //!
-//!  ## Architecture
-//!
-//!  DataSet<T, M = Population>
-//!     |
-//!     |-> stats::CentralTendancy
-//!     |-> stats::Dispersion
-//!     |-> risk_metrics::RiskMetrics
 //!
 //! ## example
 //!
-//! ### DataSet construction
+//! ### ``DataSet`` construction
 //!
 //! ```ignore
 //! use airborne::DataSet;
