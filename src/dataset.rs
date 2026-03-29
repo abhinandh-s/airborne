@@ -175,7 +175,6 @@ impl<T: Numeric, M: Marker> DataSet<T, M> {
             .collect()
     }
 
-    #[allow(dead_code)]
     // Lazy iterator variant
     // to be used when we don't need random access.
     pub(crate) fn to_n_iter(&self) -> impl Iterator<Item = N> {

@@ -2,10 +2,10 @@ use std::fmt::Display;
 use std::ops::Deref;
 
 use crate::compute::{ComputeFloat, N, to_n_vec};
-use crate::error::Result;
+use crate::error::{Result, check_empty_set};
 use crate::{
     CentralTendency, DataSet, Dispersion, Marker, Numeric, StatsError, covariance_n, mean_n,
-    variance_n,
+    std_dev_n, variance_n,
 };
 
 pub trait RiskMetrics<T: Numeric, M: Marker> {
@@ -37,6 +37,7 @@ pub trait RiskMetrics<T: Numeric, M: Marker> {
     fn downside_deviation(&self, mar: f64) -> Result<f64>;
     fn beta(&self, benchmark: &DataSet<T, M>) -> Result<f64>;
     fn treynor_ratio(&self, benchmark: &DataSet<T, M>, risk_free: f64) -> Result<f64>;
+    fn tracking_error(&self, benchmark: &DataSet<T, M>) -> Result<f64>;
 }
 
 pub struct SharpeResult {
@@ -175,6 +176,22 @@ impl<T: Numeric, M: Marker> RiskMetrics<T, M> for DataSet<T, M> {
 
     fn beta(&self, benchmark: &DataSet<T, M>) -> Result<f64> {
         self.beta_n(benchmark).map(ComputeFloat::cf_to_f64)
+    }
+
+    fn tracking_error(&self, benchmark: &DataSet<T, M>) -> Result<f64> {
+        if self.len() != benchmark.len() || self.is_empty() {
+            return Err(StatsError::InvalidBenchmark);
+        }
+
+        let active = self
+            .to_n_iter()
+            .zip(benchmark.to_n_iter())
+            .map(|(p, b)| p - b)
+            .collect::<Vec<N>>();
+
+        let active_ds: DataSet<N> = DataSet::new(active)?;
+
+        std_dev_n(&active_ds, active_ds.dof_denominator_n()?).map(|(_, _, sd)| sd.cf_to_f64())
     }
 }
 
