@@ -25,4 +25,4 @@ jobs:
         run: cargo test 
 
       - name: Cargo Test (with precision features flag)
-        run: cargo test cargo t -F precision
+        run: cargo test -F precision
