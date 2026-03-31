@@ -40,9 +40,57 @@ pub(crate) fn variance_n(series: &[N], dof: N) -> Result<(N, N)> {
     Ok((mean, m2 / (dof)))
 }
 
+#[doc(hidden)]
+#[macro_export]
+macro_rules! variance_n {
+    ($series:expr, $dof:expr) => {
+        $crate::stats::dispersion::variance_n($series, $dof).map(|(_, v)| v)
+    };
+    ($series:expr, $dof:expr, mu) => {
+        $crate::stats::dispersion::variance_n($series, $dof)
+    };
+}
+
+#[test]
+fn variance_n_macro_t() -> Result<()> {
+    let series = &[2, 3, 4, 5].map(N::cf_from_usize);
+    let dof = N::cf_from_usize(2);
+    let _v1 = variance_n!(series, dof)?;
+    let (_mu, _v) = variance_n!(series, dof, mu)?;
+    Ok(())
+}
+
 pub(crate) fn std_dev_n(series: &[N], dof: N) -> Result<(N, N, N)> {
     let (mu, v) = variance_n(series, dof)?;
     Ok((mu, v, v.cf_sqrt()))
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! std_dev_n {
+    ($series:expr, $dof:expr) => {
+        $crate::stats::dispersion::std_dev_n($series, $dof).map(|(_, _, sd)| sd)
+    };
+    ($series:expr, $dof:expr, mu) => {
+        $crate::stats::dispersion::std_dev_n($series, $dof).map(|(mu, _, sd)| (mu, sd))
+    };
+    ($series:expr, $dof:expr, v) => {
+        $crate::stats::dispersion::std_dev_n($series, $dof).map(|(_, v, sd)| (v, sd))
+    };
+    ($series:expr, $dof:expr, mu, v) => {
+        $crate::stats::dispersion::std_dev_n($series, $dof)
+    };
+}
+
+#[test]
+fn std_dev_n_macro_t() -> Result<()> {
+    let series = &[2, 3, 4, 5].map(N::cf_from_usize);
+    let dof = N::cf_from_usize(2);
+    let _v1 = std_dev_n!(series, dof)?;
+    let (_mu, _v) = std_dev_n!(series, dof, mu)?;
+    let (_mu, _v) = std_dev_n!(series, dof, v)?;
+    let (_mu, _v, _sd) = std_dev_n!(series, dof, mu, v)?;
+    Ok(())
 }
 
 impl<T: Numeric, M: Marker> Dispersion for DataSet<T, M> {
