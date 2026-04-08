@@ -82,5 +82,3 @@ pub(crate) fn check_empty_set(s: &[N]) -> Result<()> {
     }
     Ok(())
 }
-
-

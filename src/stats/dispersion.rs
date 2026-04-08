@@ -9,6 +9,7 @@ use crate::{
 pub trait Dispersion {
     fn variance(&self) -> Result<f64>;
     fn std_dev(&self) -> Result<f64>;
+    fn normalize(&self) -> Result<Vec<f64>>;
 }
 
 // Welford maintains a running mean and running sum-of-squared-deviations in one pass:
@@ -107,6 +108,20 @@ impl<T: Numeric, M: Marker> Dispersion for DataSet<T, M> {
         let (_, _, sd) = std_dev_n(&series, dof)?;
         Ok(sd.cf_to_f64())
     }
+
+    fn normalize(&self) -> Result<Vec<f64>> {
+        let v = self.to_n_vec()?;
+        let min = v.iter().cloned().fold(N::cf_infinity(), N::cf_min);
+        let max = v.iter().cloned().fold(N::cf_neg_infinity(), N::cf_max);
+        let rng = max - min;
+        if rng == N::cf_zero() {
+            return Err(crate::StatsError::ZeroVariance);
+        }
+
+        let n = v.iter().map(|&x| (x - min) / rng);
+        let res = n.map(N::cf_to_f64).collect();
+        Ok(res)
+    }
 }
 
 #[cfg(test)]
@@ -118,7 +133,7 @@ mod test {
     // https://statisticsbyjim.com/calculators/variance-calculator/
     #[test]
     fn variance_t() {
-        let data: DataSet<i32> = DataSet::new([1, 2, 3, 4, 5, 6, 7, 8, 9, 0]).unwrap();
+        let data: DataSet<i32> = DataSet::from_iter([1, 2, 3, 4, 5, 6, 7, 8, 9, 0]);
         let variance = data.variance().unwrap();
         assert_eq!(variance, 8.250000);
     }
@@ -126,8 +141,15 @@ mod test {
     // https://www.calculator.net/standard-deviation-calculator.html?numberinputs=10%2C+12%2C+23%2C+23%2C+16%2C+23%2C+21%2C+16&ctype=p&x=Calculate
     #[test]
     fn std_dev_t() {
-        let data: DataSet<i32> = DataSet::new([10, 12, 23, 23, 16, 23, 21, 16]).unwrap();
+        let data: DataSet<i32> = DataSet::from_iter([10, 12, 23, 23, 16, 23, 21, 16]);
         let sd = data.std_dev().unwrap();
         assert_eq!(sd, 4.898979485566356);
+    }
+
+    #[test]
+    fn normalize_t() {
+        let data: DataSet<i32> = DataSet::from_iter([10, 5, 0]);
+        let sd = data.normalize().unwrap();
+        assert_eq!(sd, vec![1.0, 0.5, 0.0]);
     }
 }

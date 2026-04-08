@@ -2,7 +2,7 @@ use std::fmt::Display;
 use std::ops::Deref;
 
 use crate::compute::{ComputeFloat, N, to_n_vec};
-use crate::error::{Result, check_empty_set};
+use crate::error::Result;
 use crate::{
     CentralTendency, DataSet, Dispersion, Marker, Numeric, StatsError, covariance_n, mean_n,
     std_dev_n, variance_n,
@@ -189,7 +189,7 @@ impl<T: Numeric, M: Marker> RiskMetrics<T, M> for DataSet<T, M> {
             .map(|(p, b)| p - b)
             .collect::<Vec<N>>();
 
-        let active_ds: DataSet<N> = DataSet::new(active)?;
+        let active_ds: DataSet<N> = DataSet::from_iter(active);
 
         std_dev_n(&active_ds, active_ds.dof_denominator_n()?).map(|(_, _, sd)| sd.cf_to_f64())
     }
@@ -282,7 +282,7 @@ mod test {
     #[test]
     fn sharpe_t() -> Result<()> {
         let rf = 0.03; // risk free return = 3%
-        let series: DataSet<f64> = DataSet::new(ITC.to_vec())?;
+        let series: DataSet<f64> = DataSet::from_iter(ITC.to_vec());
         let s1 = series.sharpe_ratio(rf)?.value();
         assertion!(
             s1,

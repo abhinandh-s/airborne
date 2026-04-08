@@ -379,4 +379,3 @@ mod test {
         assert_eq!((N::cf_zero() + x).cf_to_f64(), x.cf_to_f64());
     }
 }
-

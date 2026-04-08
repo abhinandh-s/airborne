@@ -73,18 +73,16 @@ mod test {
 
     #[test]
     fn covariance_t() {
-        let series: DataSet<i32, Sample> = DataSet::new([1, 2, 3, 4, 5, 6, 7, 8, 9]).unwrap();
-        let other: DataSet<i32, Sample> =
-            DataSet::new([10, 20, 27, 13, 32, 12, 89, 66, 43]).unwrap();
+        let series: DataSet<i32, Sample> = DataSet::from_iter([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        let other: DataSet<i32, Sample> = DataSet::from_iter([10, 20, 27, 13, 32, 12, 89, 66, 43]);
         let cov = series.covariance(&other).unwrap();
         assert_eq!(cov, 49.125);
     }
 
     #[test]
     fn pearson_t() {
-        let series: DataSet<i32, Sample> = DataSet::new([1, 2, 3, 4, 5, 6, 7, 8, 9]).unwrap();
-        let other: DataSet<i32, Sample> =
-            DataSet::new([10, 20, 27, 13, 32, 12, 89, 66, 43]).unwrap();
+        let series: DataSet<i32, Sample> = DataSet::from_iter([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        let other: DataSet<i32, Sample> = DataSet::from_iter([10, 20, 27, 13, 32, 12, 89, 66, 43]);
         let p = series.pearson(&other).unwrap();
         assert_eq!(p, 0.6618750825608319);
     }

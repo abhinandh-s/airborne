@@ -5,7 +5,7 @@ use crate::{DataSet, StatsError};
 
 /// Helper to wrap data into the DataSet using Sample marker
 fn create_test_ds(data: Vec<f64>) -> DataSet<f64, Sample> {
-    DataSet::new(data).expect("Failed to create test dataset")
+    DataSet::from_iter(data)
 }
 
 #[test]
