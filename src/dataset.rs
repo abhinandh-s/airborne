@@ -1,4 +1,3 @@
-use std::fmt::Debug;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
@@ -7,9 +6,15 @@ use crate::error::{Result, StatsError};
 use crate::marker::{Marker, Population, Sample};
 use crate::numeric::Numeric;
 
+/// ## DataSet
+///
 /// A statistically-typed, generic dataset.
 ///
-/// The two parameters are:
+/// `DataSet` provides a type-safe way to handle statistical calculations by marking
+/// data as either [`Sample`] or a [`Population`] at compile time. This ensures that
+/// operations like variance or standard deviation use the correct [Degree of Freedom](https://en.wikipedia.org/wiki/Degrees_of_freedom_(statistics)) (DOF).
+///
+/// ## Type parameters
 ///
 /// `T` => Any type which satisfies `Numeric` trait. (`i32`, `f64`, `u16`, ...)
 /// `M` => [`Sample`] or [`Population`] => defaults to [`Population`]
@@ -90,6 +95,12 @@ impl<T: Numeric, M: Marker> DataSet<T, M> {
         self.data.as_slice()
     }
 
+    /// construct `DataSet` from any `AsRef<[T]>` (slice, array ref, vec ref, etc. )
+    #[inline]
+    pub fn from_slice(data: impl AsRef<[T]>) -> Self {
+        Self::from_iter(data.as_ref().iter().copied())
+    }
+
     /// Consume and return the underlying `Vec`.
     #[inline]
     pub fn into_vec(self) -> Vec<T> {
@@ -102,14 +113,17 @@ impl<T: Numeric, M: Marker> DataSet<T, M> {
     }
 }
 
-impl<T: Numeric, M: Marker> DataSet<T, M> {
+impl<T: Numeric, M: Marker> DataSet<T, M> {     // coverage: exclude
     /// Creates a new DataSet from any iterator
     ///
     /// # Errors
     ///
     /// This function will return an error ([`StatsError::EmptyDataset`]) if the `data` is empty.
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            data: Vec::new(),
+            _marker: PhantomData,
+        }
     }
 
     /// Name of the marker type: `"Sample"` or `"Population"`.
@@ -140,7 +154,7 @@ impl<T: Numeric, M: Marker> DataSet<T, M> {
         Ok(n - offset)
     }
 
-    pub fn dof_denominator_n(&self) -> Result<N> {
+    pub(crate) fn dof_denominator_n(&self) -> Result<N> {
         self.dof_denominator().map(N::cf_from_usize)
     }
 
@@ -180,33 +194,6 @@ impl<T: Numeric, M: Marker> DataSet<T, M> {
     }
 }
 
-impl<T: Numeric, M: Marker> Default for DataSet<T, M> {
-    fn default() -> Self {
-        Self {
-            data: Vec::new(),
-            _marker: PhantomData, // coverage: exclude
-        }
-    }
-}
-
-impl<T, M> FromIterator<T> for DataSet<T, M>
-where
-    T: Numeric,
-    M: Marker,
-{
-    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
-        let mut data = Vec::new();
-        for item in iter {
-            data.push(item);
-        }
-
-        DataSet {
-            data,
-            _marker: std::marker::PhantomData,
-        }
-    }
-}
-
 impl<T: Numeric, M: Marker> DataSet<T, M> {
     /// Re-interpret this dataset as a **sample** dataset (zero allocation).
     pub fn into_sample(self) -> SampleData<T> {
@@ -241,7 +228,29 @@ impl<T: Numeric, M: Marker> DataSet<T, M> {
     }
 }
 
-impl<T: Numeric, M: Marker> Debug for DataSet<T, M> {
+// # impl
+//   - Default
+//   - Debug
+//   - Display
+//   - FromIterator<T>
+//   - IntoIterator for DataSet<T, M>
+//   - IntoIterator for &'a DataSet<T, M>
+//   - Deref
+//   - DerefMut
+//   - AsRef<[T]>
+//   - From:
+//      - Vec<T>
+//      - [T; N]
+//      - &[T; N]
+//      - [T]
+
+impl<T: Numeric, M: Marker> Default for DataSet<T, M> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T: Numeric, M: Marker> std::fmt::Debug for DataSet<T, M> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "DataSet<{}>({:?})", M::NAME, self.data)
     }
@@ -249,7 +258,49 @@ impl<T: Numeric, M: Marker> Debug for DataSet<T, M> {
 
 impl<T: Numeric, M: Marker> std::fmt::Display for DataSet<T, M> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "DataSet<{}>[n={}]", M::NAME, self.len())
+        write!(f, "{:?}", self.data)
+    }
+}
+
+impl<T: Numeric, M: Marker> From<Vec<T>> for DataSet<T, M> {
+    fn from(v: Vec<T>) -> Self {
+        Self::from_iter(v)
+    }
+}
+
+impl<T: Numeric, M: Marker, const N: usize> From<[T; N]> for DataSet<T, M> {
+    fn from(arr: [T; N]) -> Self {
+        Self::from_iter(arr)
+    }
+}
+
+impl<T: Numeric, M: Marker, const N: usize> From<&[T; N]> for DataSet<T, M> {
+    fn from(arr: &[T; N]) -> Self {
+        Self::from_slice(arr)
+    }
+}
+
+impl<T: Numeric, M: Marker> From<&[T]> for DataSet<T, M> {
+    fn from(s: &[T]) -> Self {
+        Self::from_slice(s)
+    }
+}
+
+impl<T, M> FromIterator<T> for DataSet<T, M>
+where
+    T: Numeric,
+    M: Marker,
+{
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        let mut data = Vec::new();
+        for item in iter {
+            data.push(item);
+        }
+
+        DataSet {
+            data,
+            _marker: std::marker::PhantomData,
+        }
     }
 }
 
@@ -279,23 +330,6 @@ where
     fn into_iter(self) -> Self::IntoIter {
         self.data.iter()
     }
-}
-
-#[macro_export]
-macro_rules! dataset {
-      ($($x:expr),+ $(,)?) => (
-        $crate::DataSet::from_iter(
-            // Using the intrinsic produces a dramatic improvement in stack usage for
-            // unoptimized programs using this code path to construct large Vecs.
-            [$($x),+]
-        )
-    );
-}
-
-#[test]
-fn data_set_macro_t() {
-    let data: DataSet<i32> = dataset![1, 2, 3, 4, 5];
-    assert!(data.marker_name() == "Population");
 }
 
 impl<T, M> Deref for DataSet<T, M>
@@ -330,10 +364,58 @@ where
     }
 }
 
+/// Creates a [`DataSet`] containing the arguments.
+///
+/// `dataset!` allows `DataSet`s to be defined with the same syntax as array expressions.
+/// There are two forms of this macro:
+///
+/// * Create a [`DataSet`] containing a given list of elements:
+///
+/// ```rust
+/// use airborne::dataset;
+/// use airborne::DataSet;
+///
+/// let v: DataSet<i32> = dataset![1, 2, 3];
+/// assert_eq!(v[0], 1);
+/// assert_eq!(v[1], 2);
+/// assert_eq!(v[2], 3);
+/// ```
+///
+/// * Create a [`DataSet`] from a given element and size:
+///
+/// ```rust
+/// use airborne::dataset;
+/// use airborne::DataSet;
+///
+/// let v: DataSet<i32> = dataset![1; 3];
+/// assert_eq!(*v, [1, 1, 1]);
+/// ```
+///
+/// Also, note that `dataset![expr; 0]` is allowed, and produces an empty vector.
+/// This will still evaluate `expr`, however, and immediately drop the resulting value, so
+/// be mindful of side effects.
+#[macro_export]
+macro_rules! dataset {
+    () => (
+        $crate::DataSet::new()
+    );
+    ($elem:expr; $n:expr) => (
+       $crate::DataSet::from_slice([$elem; $n])
+    );
+    ($($x:expr),+ $(,)?) => (
+        $crate::DataSet::from_iter(
+            [$($x),+]
+        )
+    );
+}
+
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::marker::Population;
+    use crate::{
+        DataSet, Marker, Sample, StatsError,
+        compute::{ComputeFloat, N},
+        marker::{self, Population},
+    };
 
     #[test]
     fn test_new_success() {
@@ -343,160 +425,168 @@ mod tests {
         assert!(!ds.is_empty());
     }
 
-    // #[test]
-    // fn test_new_empty_error() {
-    //     let data = [];
-    //     let result = DataSet::<i32, Population>::from_iter(data.into_iter());
-    //     assert!(result.is_err());
-    //     // Verify it returns StatsError::EmptyIterator
-    // }
+    #[test]
+    fn test_from() {
+        let my_slice = &[1.0, 2.1];
+        let my_array = [1.0];
 
-    // #[test]
-    // fn test_push_and_extend() {
-    //     let mut ds = DataSet::<i32, Sample>::new([1]).unwrap();
-    //     ds.push(2);
-    //     ds.extend([3, 4]);
-    //     assert_eq!(ds.data, vec![1, 2, 3, 4]);
-    // }
-    //
-    // #[test]
-    // fn test_dof_denominator() {
-    //     // Population DOF_OFFSET is usually 0
-    //     let pop = DataSet::<i32, Population>::new([10, 20]).unwrap();
-    //     assert_eq!(pop.dof_denominator().unwrap(), 2);
-    //
-    //     // Sample DOF_OFFSET is usually 1
-    //     let samp = DataSet::<i32, Sample>::new([10, 20]).unwrap();
-    //     assert_eq!(samp.dof_denominator().unwrap(), 1);
-    //
-    //     // Test InsufficientData error
-    //     let tiny_samp = DataSet::<i32, Sample>::new([10]).unwrap();
-    //     assert!(tiny_samp.dof_denominator().is_err());
-    // }
-    //
-    // #[test]
-    // fn test_conversions_reinterpret() {
-    //     let ds = DataSet::<i32, Population>::new([1, 2]).unwrap();
-    //
-    //     // Test into_ conversions (consuming)
-    //     let sample = ds.into_sample();
-    //     assert_eq!(sample.marker_name(), "Sample");
-    //
-    //     let pop = sample.into_population();
-    //     assert_eq!(pop.marker_name(), "Population");
-    //
-    //     // Test clone conversions (non-consuming)
-    //     let s_clone = pop.as_sample_clone();
-    //     let p_clone = s_clone.as_population_clone();
-    //
-    //     assert_eq!(p_clone.len(), 2);
-    // }
-    //
-    // #[test]
-    // fn test_to_n_vec_and_iter() {
-    //     let ds = DataSet::<f64, Population>::new([1.1, 2.2]).unwrap();
-    //
-    //     // Test successful conversion
-    //     let n_vec = ds.to_n_vec().unwrap();
-    //     assert_eq!(n_vec.len(), 2);
-    //
-    //     // Test internal iter (usually used after validation)
-    //     let n_iter_count = ds.to_n_iter().count();
-    //     assert_eq!(n_iter_count, 2);
-    // }
-    //
-    // #[test]
-    // fn test_formatting_traits() {
-    //     let ds = DataSet::<i32, Population>::new([1, 2]).unwrap();
-    //
-    //     // Debug
-    //     let debug_str = format!("{:?}", ds);
-    //     assert!(debug_str.contains("DataSet<Population>([1, 2])"));
-    //
-    //     // Display
-    //     let display_str = format!("{}", ds);
-    //     assert_eq!(display_str, "DataSet<Population>[n=2]");
-    // }
-    //
-    // #[test]
-    // fn test_deref_and_slices() {
-    //     let mut ds = DataSet::<i32, Population>::new([1, 2, 3]).unwrap();
-    //
-    //     // Deref to slice
-    //     assert_eq!(ds.as_slice(), &[1, 2, 3]);
-    //     assert_eq!(ds.len(), 3);
-    //
-    //     // DerefMut
-    //     ds[0] = 10;
-    //     assert_eq!(ds[0], 10);
-    //
-    //     // AsRef
-    //     let r: &[i32] = ds.as_ref();
-    //     assert_eq!(r[0], 10);
-    // }
-    //
-    // #[test]
-    // fn test_iterators() {
-    //     let ds = DataSet::<i32, Population>::new([1, 2]).unwrap();
-    //
-    //     // Ref Iterator
-    //     for val in &ds {
-    //         assert!(*val > 0);
-    //     }
-    //
-    //     // IntoIterator (consuming)
-    //     let vec: Vec<i32> = ds.into_iter().collect();
-    //     assert_eq!(vec, vec![1, 2]);
-    // }
-    //
-    // #[test]
-    // fn test_macro_construction() {
-    //     let ds: Result<DataSet<i32, Population>> = dataset![1, 2, 3];
-    //     assert!(ds.is_ok());
-    //     assert_eq!(ds.unwrap().len(), 3);
-    // }
-    //
-    // #[test]
-    // fn test_into_vec() {
-    //     let ds = DataSet::<i32, Population>::new([1, 2]).unwrap();
-    //     let v = ds.into_vec();
-    //     assert_eq!(v, vec![1, 2]);
-    // }
-    //
-    // #[test]
-    // fn marker_name_t() {
-    //     let ds = DataSet::<i32, Population>::new([1, 2]).unwrap();
-    //     let m = ds.marker_name();
-    //     let n = <marker::Population as Marker>::NAME;
-    //     assert_eq!("Population", m);
-    //     assert_eq!(n, m);
-    // }
-    //
-    // #[test]
-    // fn test_dof_denominator_error_coverage() {
-    //     let ds = DataSet::<f64, Sample>::new(vec![1.0]).unwrap();
-    //     let result = ds.dof_denominator();
-    //
-    //     assert!(result.is_err());
-    //
-    //     assert_eq!(
-    //         result,
-    //         Err(StatsError::InsufficientData { needed: 2, got: 1 })
-    //     );
-    // }
-    //
-    // #[test]
-    // fn len_n_t() {
-    //     let ds = DataSet::<i32, Population>::new([1, 2]).unwrap();
-    //     let m = ds.len_n();
-    //     assert_eq!(N::cf_from_usize(2), m);
-    // }
-    //
-    // #[test]
-    // #[should_panic]
-    // // called `Result::unwrap()` on an `Err` value: InvalidValue { index: 1 }
-    // fn to_n_vec_must_fail_on_inf_t() {
-    //     let d: DataSet<f64> = DataSet::new([10.0, f64::NAN, 2.0]).unwrap();
-    //     d.to_n_vec().unwrap();
-    // }
+        let _a: DataSet<f64, Sample> = [1.0, 2.0, 3.0].into(); // .into() via From<[T;N]>
+        let _b: DataSet<f64, Sample> = vec![1.0].into(); // .into() via From<Vec>
+        let _c: DataSet<f64, Sample> = DataSet::from([1.0, 2.0, 3.0]); // [T; N]
+        let _d: DataSet<f64, Sample> = DataSet::from(&[1.0, 2.0, 3.0]); // &[T; N]
+        let _e: DataSet<f64, Sample> = DataSet::from(vec![1.0, 2.0, 3.0]); // Vec<T>
+        let _f: DataSet<f64, Sample> = DataSet::from(my_slice); // &[T]
+        let _g: DataSet<f64, Sample> = DataSet::from_slice(&my_array); // any AsRef<[T]>
+        let _h = DataSet::<i32, Population>::from(&[1, 2, 3]);
+    }
+
+    #[test]
+    fn test_new_empty_error() {
+        let data = [];
+        let result = DataSet::<i32, Population>::from_iter(data.into_iter());
+        assert!(result.to_n_vec().is_err());
+        // Verify it returns StatsError::EmptyIterator
+    }
+
+    #[test]
+    fn test_push_and_extend() {
+        let mut ds = DataSet::<i32, Sample>::from([1]);
+        ds.push(2);
+        ds.extend([3, 4]);
+        assert_eq!(ds.data, vec![1, 2, 3, 4]);
+    }
+
+    #[test]
+    fn test_dof_denominator() {
+        // Population DOF_OFFSET is usually 0
+        let pop = DataSet::<i32, Population>::from([10, 20]);
+        assert_eq!(pop.dof_denominator().unwrap(), 2);
+
+        // Sample DOF_OFFSET is usually 1
+        let samp = DataSet::<i32, Sample>::from([10, 20]);
+        assert_eq!(samp.dof_denominator().unwrap(), 1);
+
+        // Test InsufficientData error
+        let tiny_samp = DataSet::<i32, Sample>::from([10]);
+        assert!(tiny_samp.dof_denominator().is_err());
+    }
+
+    #[test]
+    fn test_conversions_reinterpret() {
+        let ds = DataSet::<i32, Population>::from([1, 2]);
+
+        // Test into_ conversions (consuming)
+        let sample = ds.into_sample();
+        assert_eq!(sample.marker_name(), "Sample");
+
+        let pop = sample.into_population();
+        assert_eq!(pop.marker_name(), "Population");
+
+        // Test clone conversions (non-consuming)
+        let s_clone = pop.as_sample_clone();
+        let p_clone = s_clone.as_population_clone();
+
+        assert_eq!(p_clone.len(), 2);
+    }
+
+    #[test]
+    fn test_to_n_vec_and_iter() {
+        let ds = DataSet::<f64, Population>::from([1.1, 2.2]);
+
+        // Test successful conversion
+        let n_vec = ds.to_n_vec().unwrap();
+        assert_eq!(n_vec.len(), 2);
+
+        // Test internal iter (usually used after validation)
+        let n_iter_count = ds.to_n_iter().count();
+        assert_eq!(n_iter_count, 2);
+    }
+
+    #[test]
+    fn test_formatting_traits() {
+        let ds = DataSet::<i32, Population>::from([1, 2]);
+
+        // Debug
+        let debug_str = format!("{:?}", ds);
+        assert!(debug_str.contains("DataSet<Population>([1, 2])"));
+
+        // Display
+        let display_str = format!("{}", ds);
+        assert_eq!(display_str, "[1, 2]");
+    }
+
+    #[test]
+    fn test_deref_and_slices() {
+        let mut ds = DataSet::<i32, Population>::from([1, 2, 3]);
+
+        // Deref to slice
+        assert_eq!(ds.as_slice(), &[1, 2, 3]);
+        assert_eq!(ds.len(), 3);
+
+        // DerefMut
+        ds[0] = 10;
+        assert_eq!(ds[0], 10);
+
+        // AsRef
+        let r: &[i32] = ds.as_ref();
+        assert_eq!(r[0], 10);
+    }
+
+    #[test]
+    fn test_iterators() {
+        let ds = DataSet::<i32, Population>::from([1, 2]);
+
+        // Ref Iterator
+        for val in &ds {
+            assert!(*val > 0);
+        }
+
+        // IntoIterator (consuming)
+        let vec: Vec<i32> = ds.into_iter().collect();
+        assert_eq!(vec, vec![1, 2]);
+    }
+
+    #[test]
+    fn test_into_vec() {
+        let ds = DataSet::<i32, Population>::from([1, 2]);
+        let v = ds.into_vec();
+        assert_eq!(v, vec![1, 2]);
+    }
+
+    #[test]
+    fn marker_name_t() {
+        let ds = DataSet::<i32, Population>::from([1, 2]);
+        let m = ds.marker_name();
+        let n = <marker::Population as Marker>::NAME;
+        assert_eq!("Population", m);
+        assert_eq!(n, m);
+    }
+
+    #[test]
+    fn test_dof_denominator_error_coverage() {
+        let ds = DataSet::<f64, Sample>::from(vec![1.0]);
+        let result = ds.dof_denominator();
+
+        assert!(result.is_err());
+
+        assert_eq!(
+            result,
+            Err(StatsError::InsufficientData { needed: 2, got: 1 })
+        );
+    }
+
+    #[test]
+    fn len_n_t() {
+        let ds = DataSet::<i32, Population>::from([1, 2]);
+        let m = ds.len_n();
+        assert_eq!(N::cf_from_usize(2), m);
+    }
+
+    #[test]
+    #[should_panic]
+    // called `Result::unwrap()` on an `Err` value: InvalidValue { index: 1 }
+    fn to_n_vec_must_fail_on_inf_t() {
+        let d: DataSet<f64> = DataSet::from([10.0, f64::NAN, 2.0]);
+        d.to_n_vec().unwrap();
+    }
 }
