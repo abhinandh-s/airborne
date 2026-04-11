@@ -30,9 +30,9 @@ jobs:
 
       - name: Build docs
         env:
-          # -D warnings ensures your CI fails if there are doc errors
+          # -D warnings ensures our CI fails if there are doc errors
           # --generate-link-to-definition makes the source code interactive
-          RUSTDOCFLAGS: "-D warnings --generate-link-to-definition"
+          RUSTDOCFLAGS: "-D warnings -Z unstable-options --generate-link-to-definition"
         run: cargo doc --no-deps --all-features
 
       # - name: Build docs
