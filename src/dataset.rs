@@ -118,7 +118,7 @@ impl<T: Numeric, M: Marker> DataSet<T, M> {     // coverage: exclude
     ///
     /// # Errors
     ///
-    /// This function will return an error ([`StatsError::EmptyDataset`]) if the `data` is empty.
+    /// This function will return an error ([`StatsError::EmptyIterator`]) if the `data` is empty.
     pub fn new() -> Self {
         Self {
             data: Vec::new(),
