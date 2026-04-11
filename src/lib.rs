@@ -44,17 +44,21 @@ pub use dataset::*;
 
 pub mod error;
 mod marker;
-mod risk_metrics;
 pub(crate) mod utils;
 
-pub mod stats;
+mod risk_metrics;
+pub use risk_metrics::*;
 
+pub mod stats;
 pub use stats::*;
+
+pub mod finance;
+pub use finance::*;
+
 
 pub use error::{Result, StatsError};
 pub use marker::{Marker, Population, Sample};
 pub use numeric::Numeric;
-pub use risk_metrics::*;
 
 pub mod prelude {
     pub use crate::dataset::{DataSet, PopulationData, SampleData};

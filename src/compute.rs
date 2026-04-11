@@ -301,6 +301,20 @@ pub type N = f64;
 #[cfg(feature = "precision")]
 pub type N = rust_decimal::Decimal;
 
+#[macro_export]
+macro_rules! nf64 {
+    ($num:expr) => {{
+        N::cf_from_f64($num)
+    }}
+}
+
+#[macro_export]
+macro_rules! nusize {
+    ($num:expr) => {{
+        N::cf_from_usize($num)
+    }}
+}
+
 pub(crate) fn to_n<T: Numeric>(val: T, index: usize) -> Result<N> {
     let f = val.to_f64().ok_or(StatsError::ConversionError { index })?;
 
