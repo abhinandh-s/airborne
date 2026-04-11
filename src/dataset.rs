@@ -16,8 +16,8 @@ use crate::numeric::Numeric;
 ///
 /// ## Type parameters
 ///
-/// `T` => Any type which satisfies `Numeric` trait. (`i32`, `f64`, `u16`, ...)
-/// `M` => [`Sample`] or [`Population`] => defaults to [`Population`]
+/// - `T` => Any type which satisfies `Numeric` trait. (`i32`, `f64`, `u16`, ...)
+/// - `M` => [`Sample`] or [`Population`] => defaults to [`Population`]
 ///
 /// Since `M` defaults to `Population`,
 /// `DataSet<i32>` and `DataSet<i32, Population>` are exactly the same type.
