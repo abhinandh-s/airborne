@@ -33,6 +33,7 @@
 // #![warn(missing_docs)]
 
 mod numeric;
+pub mod types;
 
 #[macro_use] // pub(crate) but for macros,
 // macros are now available for all modules bellow
@@ -55,6 +56,8 @@ pub use stats::*;
 pub mod finance;
 pub use finance::*;
 
+pub mod capital;
+pub use capital::*;
 
 pub use error::{Result, StatsError};
 pub use marker::{Marker, Population, Sample};
