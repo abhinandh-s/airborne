@@ -72,6 +72,13 @@ pub enum StatsError {
 
     #[error("equity curve is flat; max drawdown is undefined")]
     FlatEquityCurve,
+
+    #[error("argument must be in between [{lower_bound}..{upper_bound}]: got {n}")]
+    InvalidRange {
+        n: f64,
+        lower_bound: f64,
+        upper_bound: f64,
+    },
 }
 
 pub type Result<T> = std::result::Result<T, StatsError>;
@@ -81,4 +88,44 @@ pub(crate) fn check_empty_set(s: &[N]) -> Result<()> {
         return Err(StatsError::EmptyIterator);
     }
     Ok(())
+}
+
+// return true: if passes
+pub(crate) fn check_bound(n: f64, lower_bound: f64, upper_bound: f64) -> Result<()> {
+    if n == lower_bound || n == upper_bound {
+        return Ok(());
+    }
+    let rng = lower_bound..upper_bound;
+    if !rng.contains(&n) {
+        return Err(crate::StatsError::InvalidRange {
+            n,
+            lower_bound,
+            upper_bound,
+        });
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn bound_t() {
+        check_bound(0.0, 0.0, 1.0).unwrap();
+        check_bound(0.5, 0.0, 1.0).unwrap();
+        check_bound(1.0, 0.0, 1.0).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn bound_shoud_fail_t_01() {
+        check_bound(-0.2, 0.0, 1.0).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn bound_shoud_fail_t_02() {
+        check_bound(1.1, 0.0, 1.0).unwrap();
+    }
 }

@@ -1,2 +1,2 @@
-pub mod capital;
-pub mod cap_budget;
+pub mod annuity;
+pub mod ratios;
