@@ -20,7 +20,8 @@ pub fn fv_single(pv: f64, rate: f64, periods: u32) -> Result<f64> {
 }
 
 pub fn fv_single_unchecked(pv: f64, rate: f64, periods: u32) -> f64 {
-    nf64!(pv) * (N::cf_one() + nf64!(rate)).cf_powf(periods as f64)
+    let fv = nf64!(pv) * (N::cf_one() + nf64!(rate)).cf_powf(periods as f64);
+    fv.cf_to_f64()
 }
 
 #[cfg(test)]
