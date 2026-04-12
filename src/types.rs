@@ -22,7 +22,7 @@ impl Percentage {
     ///
     /// # Error
     ///
-    /// a value outside 0..100 will cause [`StatsError::InvalidRange`].
+    /// a value outside 0..100 will cause [`crate::error::StatsError::InvalidRange`].
     /// Thereby, `Percentage` guarantees value is in betweem 0..10
     pub fn new(p: impl Into<f64>) -> Result<Self> {
         let v = p.into();
