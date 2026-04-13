@@ -1,5 +1,9 @@
+use std::ops::Add;
 use std::ops::Deref;
 use std::ops::DerefMut;
+use std::ops::Div;
+use std::ops::Mul;
+use std::ops::Sub;
 
 use crate::Result;
 use crate::error::check_bound;
@@ -17,6 +21,7 @@ impl Percentage {
     ///
     /// let p = Percentage::new(10).unwrap();
     /// let result = 1000.0 * p.as_decimal();
+    /// let result = 1000.0 * p; // also works cuz `Percentage` impls `Mul` for f64
     /// assert_eq!(result, 100.0);
     /// ```
     ///
@@ -40,7 +45,6 @@ impl Percentage {
     /// let p = Percentage::new_unchecked(10);
     /// let result = 1000.0 * p.as_decimal();
     /// assert_eq!(result, 100.0);
-
     /// ```
     pub fn new_unchecked(p: impl Into<f64>) -> Self {
         Self(p.into())
@@ -51,16 +55,16 @@ impl Percentage {
     /// ```
     /// use airborne::types::Percentage;
     ///
-    /// let perc = Percentage::from_frac(5, 10);
+    /// let perc = Percentage::from_frac(5, 10); // (5 / 10 ) * 100 = 50%
     /// assert_eq!(perc.inner(), 50.0);
     /// ```
     pub fn from_frac(num: impl Into<f64>, deno: impl Into<f64>) -> Self {
         Self((num.into() / deno.into()) * 100.0)
     }
 
-    /// return `Percentage` as decimal 
+    /// return `Percentage` as decimal
     ///  
-    /// > `Percentage(10)` => 0.10 
+    /// > `Percentage(10)` => 0.10
     ///
     /// ```
     /// use airborne::types::Percentage;
@@ -78,6 +82,15 @@ impl Percentage {
     /// return innner value of `Percentage`
     ///
     /// Percentage(10) => 10
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use airborne::types::Percentage;
+    ///
+    /// let percentage = Percentage::new_unchecked(40);
+    /// assert_eq!(percentage.inner(), 40.0);
+    /// ```
     pub fn inner(&self) -> f64 {
         self.0
     }
@@ -103,8 +116,69 @@ impl From<f64> for Percentage {
     }
 }
 
-impl Into<f64> for Percentage {
-    fn into(self) -> f64 {
-        self.0
+impl From<Percentage> for f64 {
+    fn from(val: Percentage) -> Self {
+        val.0
+    }
+}
+
+impl Add<Percentage> for f64 {
+    type Output = f64;
+
+    fn add(self, rhs: Percentage) -> Self::Output {
+        self + (self * rhs.as_decimal())
+    }
+}
+
+impl Sub<Percentage> for f64 {
+    type Output = f64;
+
+    fn sub(self, rhs: Percentage) -> Self::Output {
+        self - (self * rhs.as_decimal())
+    }
+}
+
+impl Mul<Percentage> for f64 {
+    type Output = f64;
+
+    fn mul(self, rhs: Percentage) -> Self::Output {
+        self * rhs.as_decimal()
+    }
+}
+
+impl Div<Percentage> for f64 {
+    type Output = f64;
+
+    fn div(self, rhs: Percentage) -> Self::Output {
+        self / rhs.as_decimal()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::types::Percentage;
+
+    #[test]
+    fn add_t() {
+        let res = 1000.0 + Percentage::new_unchecked(10);
+        assert_eq!(res, 1100.0);
+    }
+
+    #[test]
+    fn sub_t() {
+        let res = 1000.0 - Percentage::new_unchecked(10);
+        assert_eq!(res, 900.0);
+    }
+
+    #[test]
+    fn mul_t() {
+        let res = 1000.0 * Percentage::new_unchecked(10);
+        assert_eq!(res, 100.0);
+    }
+
+    #[test]
+    fn div_t() {
+        let res = 1000.0 / Percentage::new_unchecked(10);
+        assert_eq!(res, 10000.0);
     }
 }

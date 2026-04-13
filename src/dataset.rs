@@ -436,14 +436,14 @@ mod tests {
         let _d: DataSet<f64, Sample> = DataSet::from(&[1.0, 2.0, 3.0]); // &[T; N]
         let _e: DataSet<f64, Sample> = DataSet::from(vec![1.0, 2.0, 3.0]); // Vec<T>
         let _f: DataSet<f64, Sample> = DataSet::from(my_slice); // &[T]
-        let _g: DataSet<f64, Sample> = DataSet::from_slice(&my_array); // any AsRef<[T]>
+        let _g: DataSet<f64, Sample> = DataSet::from_slice(my_array); // any AsRef<[T]>
         let _h = DataSet::<i32, Population>::from(&[1, 2, 3]);
     }
 
     #[test]
     fn test_new_empty_error() {
         let data = [];
-        let result = DataSet::<i32, Population>::from_iter(data.into_iter());
+        let result = DataSet::<i32, Population>::from_iter(data);
         assert!(result.to_n_vec().is_err());
         // Verify it returns StatsError::EmptyIterator
     }
