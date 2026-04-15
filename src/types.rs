@@ -1,7 +1,9 @@
+use std::fmt::Display;
 use std::ops::Add;
 use std::ops::Deref;
 use std::ops::DerefMut;
 use std::ops::Div;
+use std::ops::Index;
 use std::ops::Mul;
 use std::ops::Sub;
 
@@ -10,6 +12,12 @@ use crate::error::check_bound;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Percentage(f64);
+
+impl Display for Percentage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}%", self.0)
+    }
+}
 
 impl Percentage {
     /// construct a new `Percentage`
@@ -154,9 +162,102 @@ impl Div<Percentage> for f64 {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Ratio {
+    parts: Vec<u32>,
+    total: u32,
+}
+
+impl Ratio {
+    pub fn new(parts: impl IntoIterator<Item = u32>) -> Self {
+        let parts: Vec<u32> = parts.into_iter().collect();
+        let total = parts.iter().sum();
+        Self { parts, total }
+    }
+
+    pub const fn len(&self) -> usize {
+        self.parts.len()
+    }
+
+    pub const fn is_empty(&self) -> bool {
+        self.parts.is_empty()
+    }
+
+    pub const fn total(&self) -> u32 {
+        self.total
+    }
+
+    pub fn part(&self, index: usize) -> Option<Fraction> {
+        self.parts.get(index).map(|&f| Fraction {
+            num: f,
+            den: self.total(),
+        })
+    }
+
+    pub fn percentage(&self, index: usize) -> Option<Percentage> {
+        self.part(index).map(|f| f.as_percentage())
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = Fraction> {
+        self.parts.iter().map(|&part| Fraction {
+            num: part,
+            den: self.total(),
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Fraction {
+    num: u32,
+    den: u32,
+}
+
+impl Fraction {
+    pub fn as_percentage(self) -> Percentage {
+        if self.den == 0 {
+            Percentage(0.0)
+        } else {
+            Percentage::from_frac(self.num, self.den)
+        }
+    }
+
+    pub fn num(&self) -> u32 {
+        self.num
+    }
+}
+
+impl Index<usize> for Ratio {
+    type Output = u32;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.parts[index]
+    }
+}
+
+#[macro_export]
+macro_rules! ratio {
+    ($first:literal $(: $rest:expr)+ $(,)?  ) => {
+        {
+            $crate::types::Ratio::new([$first, $($rest),+ ])
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use crate::types::Percentage;
+    use crate::types::{Fraction, Percentage};
+
+    #[test]
+    fn ratio_t() {
+        let ratio = ratio!(2:4:3:1);
+        let first = ratio[0];
+        assert_eq!(first, 2);
+        let second_f = ratio.part(1).unwrap();
+        assert_eq!(second_f, Fraction { num: 4, den: 10 });
+        let second_perc = second_f.as_percentage();
+        assert_eq!(second_perc, Percentage::new_unchecked(40));
+        assert_eq!(format!("{}", second_perc), "40%".to_owned());
+    }
 
     #[test]
     fn add_t() {
