@@ -303,16 +303,12 @@ pub type N = rust_decimal::Decimal;
 
 #[macro_export]
 macro_rules! nf64 {
-    ($num:expr) => {{
-        N::cf_from_f64($num)
-    }}
+    ($num:expr) => {{ N::cf_from_f64($num) }};
 }
 
 #[macro_export]
 macro_rules! nusize {
-    ($num:expr) => {{
-        N::cf_from_usize($num)
-    }}
+    ($num:expr) => {{ N::cf_from_usize($num) }};
 }
 
 pub(crate) fn to_n<T: Numeric>(val: T, index: usize) -> Result<N> {

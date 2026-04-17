@@ -113,7 +113,8 @@ impl<T: Numeric, M: Marker> DataSet<T, M> {
     }
 }
 
-impl<T: Numeric, M: Marker> DataSet<T, M> {     // coverage: exclude
+impl<T: Numeric, M: Marker> DataSet<T, M> {
+    // coverage: exclude
     /// Creates a new DataSet from any iterator
     ///
     /// # Errors

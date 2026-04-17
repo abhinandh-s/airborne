@@ -1,4 +1,15 @@
+use crate::compute::ComputeFloat;
+use crate::compute::N;
 use crate::types::Percentage;
+
+// TODO: write docs
+pub fn cost_of_credit(d: Percentage, dd: u32, ad: u32) -> f64 {
+    let d = d.as_decimal();
+    let t = (ad - dd) as f64;
+    let lhs = nf64!(d) / (nf64!(100.0) - nf64!(d));
+    let rhs = nf64!( 365.0) / nf64!(t);
+    (lhs * rhs).cf_to_f64()
+} 
 
 #[derive(Debug, Default)]
 pub struct DebtCapital {

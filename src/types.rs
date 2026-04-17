@@ -104,20 +104,6 @@ impl Percentage {
     }
 }
 
-impl Deref for Percentage {
-    type Target = f64;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for Percentage {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
 impl From<f64> for Percentage {
     fn from(value: f64) -> Self {
         Percentage(value)
@@ -190,7 +176,7 @@ impl Ratio {
     pub fn part(&self, index: usize) -> Option<Fraction> {
         self.parts.get(index).map(|&f| Fraction {
             num: f,
-            den: self.total(),
+            denom: self.total(),
         })
     }
 
@@ -201,7 +187,7 @@ impl Ratio {
     pub fn iter(&self) -> impl Iterator<Item = Fraction> {
         self.parts.iter().map(|&part| Fraction {
             num: part,
-            den: self.total(),
+            denom: self.total(),
         })
     }
 }
@@ -209,21 +195,71 @@ impl Ratio {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Fraction {
     num: u32,
-    den: u32,
+    denom: u32,
 }
 
 impl Fraction {
+    pub fn new(num: u32, denom: u32) -> Self {
+        Self { num, denom }
+    }
+
     pub fn as_percentage(self) -> Percentage {
-        if self.den == 0 {
+        if self.denom == 0 {
             Percentage(0.0)
         } else {
-            Percentage::from_frac(self.num, self.den)
+            Percentage::from_frac(self.num, self.denom)
         }
     }
 
     pub fn num(&self) -> u32 {
         self.num
     }
+
+    pub fn denom(&self) -> u32 {
+        self.denom
+    }
+
+    pub fn set_num(&mut self, num: u32) {
+        self.num = num;
+    }
+
+    pub fn set_denom(&mut self, denom: u32) {
+        self.denom = denom;
+    }
+
+    pub fn simplify(&mut self) {
+        if self.num == 0 {
+            self.denom = 1;
+            return;
+        }
+        let common = gcd(self.num, self.denom);
+        self.num /= common;
+        self.denom /= common;
+    }
+}
+
+impl Sub for Fraction {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        let l = self.num as u64 * rhs.denom as u64;
+        let r = rhs.num as u64 * self.denom as u64;
+        if l < r {
+            panic!("Fraction subtraction resulted in a negative value");
+        }
+        Self {
+            num: (l - r) as u32,
+            denom: (self.denom as u64 * rhs.denom as u64) as u32,
+        }
+    }
+}
+
+fn gcd(mut a: u32, mut b: u32) -> u32 {
+    while b != 0 {
+        a %= b;
+        std::mem::swap(&mut a, &mut b);
+    }
+    a
 }
 
 impl Index<usize> for Ratio {
@@ -248,12 +284,20 @@ mod test {
     use crate::types::{Fraction, Percentage};
 
     #[test]
+    fn fraction_sub_t() {
+        let f1 = Fraction::new(3, 5);
+        let f2 = Fraction::new(3, 6);
+        let f_res = f1 - f2;
+        assert_eq!(f_res, Fraction::new(3, 30))
+    }
+
+    #[test]
     fn ratio_t() {
         let ratio = ratio!(2:4:3:1);
         let first = ratio[0];
         assert_eq!(first, 2);
         let second_f = ratio.part(1).unwrap();
-        assert_eq!(second_f, Fraction { num: 4, den: 10 });
+        assert_eq!(second_f, Fraction { num: 4, denom: 10 });
         let second_perc = second_f.as_percentage();
         assert_eq!(second_perc, Percentage::new_unchecked(40));
         assert_eq!(format!("{}", second_perc), "40%".to_owned());

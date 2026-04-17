@@ -4,8 +4,6 @@ use crate::compute::ComputeFloat;
 use crate::compute::N;
 use crate::error::check_bound;
 
-
-
 fn is_finite(v: f64, index: usize) -> Result<N> {
     if !v.is_finite() {
         return Err(StatsError::InvalidValue { index });
