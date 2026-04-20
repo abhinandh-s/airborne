@@ -1,14 +1,6 @@
 use std::fmt::Display;
-use std::ops::Add;
-use std::ops::Deref;
-use std::ops::DerefMut;
-use std::ops::Div;
 use std::ops::Index;
-use std::ops::Mul;
 use std::ops::Sub;
-
-use crate::Result;
-use crate::error::check_bound;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Percentage(f64);
@@ -27,35 +19,15 @@ impl Percentage {
     /// ```
     /// use airborne::types::Percentage;
     ///
-    /// let p = Percentage::new(10).unwrap();
+    /// let p = Percentage::new(10);
     /// let result = 1000.0 * p.as_decimal();
-    /// let result = 1000.0 * p; // also works cuz `Percentage` impls `Mul` for f64
+    /// let result_02 = 1000.0 * p; // also works cuz `Percentage` impls `Mul` for f64
     /// assert_eq!(result, 100.0);
+    /// assert_eq!(result, result_02);
     /// ```
-    ///
-    /// # Error
-    ///
-    /// a value outside 0..100 will cause [`crate::error::StatsError::InvalidRange`].
-    /// Thereby, `Percentage` guarantees value is in betweem 0..10
-    pub fn new(p: impl Into<f64>) -> Result<Self> {
+    pub fn new(p: impl Into<f64>) -> Self {
         let v = p.into();
-        check_bound(v, 0.0, 100.0)?;
-        Ok(Self(v))
-    }
-
-    /// construct a new `Percentage` without bound check
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use airborne::types::Percentage;
-    ///
-    /// let p = Percentage::new_unchecked(10);
-    /// let result = 1000.0 * p.as_decimal();
-    /// assert_eq!(result, 100.0);
-    /// ```
-    pub fn new_unchecked(p: impl Into<f64>) -> Self {
-        Self(p.into())
+        Self(v)
     }
 
     /// construct `Percentage` from fraction
@@ -96,7 +68,7 @@ impl Percentage {
     /// ```
     /// use airborne::types::Percentage;
     ///
-    /// let percentage = Percentage::new_unchecked(40);
+    /// let percentage = Percentage::new(40);
     /// assert_eq!(percentage.inner(), 40.0);
     /// ```
     pub fn inner(&self) -> f64 {
@@ -116,37 +88,53 @@ impl From<Percentage> for f64 {
     }
 }
 
-impl Add<Percentage> for f64 {
-    type Output = f64;
 
-    fn add(self, rhs: Percentage) -> Self::Output {
-        self + (self * rhs.as_decimal())
+macro_rules! impl_ops {
+    ($trait:ident, $fn:ident, $symbol:tt) => {
+        impl std::ops::$trait<f64> for Percentage {
+            type Output = f64;
+
+            fn $fn(self, rhs: f64) -> Self::Output {
+                rhs $symbol (rhs * self.as_decimal())    
+            }
+        }
+
+        impl std::ops::$trait<Percentage> for f64 {
+            type Output = f64;
+
+            fn $fn(self, rhs: Percentage) -> Self::Output {
+                self $symbol (self * rhs.as_decimal())
+            }
+        }
+
     }
 }
 
-impl Sub<Percentage> for f64 {
-    type Output = f64;
+macro_rules! impl_ops_02 {
+    ($trait:ident, $fn:ident, $symbol:tt) => {
+        impl std::ops::$trait<f64> for Percentage {
+            type Output = f64;
 
-    fn sub(self, rhs: Percentage) -> Self::Output {
-        self - (self * rhs.as_decimal())
+            fn $fn(self, rhs: f64) -> Self::Output {
+                rhs $symbol self.as_decimal()   
+            }
+        }
+
+        impl std::ops::$trait<Percentage> for f64 {
+            type Output = f64;
+
+            fn $fn(self, rhs: Percentage) -> Self::Output {
+                self $symbol rhs.as_decimal()
+            }
+        }
+
     }
 }
 
-impl Mul<Percentage> for f64 {
-    type Output = f64;
-
-    fn mul(self, rhs: Percentage) -> Self::Output {
-        self * rhs.as_decimal()
-    }
-}
-
-impl Div<Percentage> for f64 {
-    type Output = f64;
-
-    fn div(self, rhs: Percentage) -> Self::Output {
-        self / rhs.as_decimal()
-    }
-}
+impl_ops!(Add, add, +);
+impl_ops!(Sub, sub, -);
+impl_ops_02!(Mul, mul, *);
+impl_ops_02!(Div, div, /);
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Ratio {
@@ -254,6 +242,8 @@ impl Sub for Fraction {
     }
 }
 
+
+
 fn gcd(mut a: u32, mut b: u32) -> u32 {
     while b != 0 {
         a %= b;
@@ -299,31 +289,33 @@ mod test {
         let second_f = ratio.part(1).unwrap();
         assert_eq!(second_f, Fraction { num: 4, denom: 10 });
         let second_perc = second_f.as_percentage();
-        assert_eq!(second_perc, Percentage::new_unchecked(40));
         assert_eq!(format!("{}", second_perc), "40%".to_owned());
     }
 
-    #[test]
-    fn add_t() {
-        let res = 1000.0 + Percentage::new_unchecked(10);
-        assert_eq!(res, 1100.0);
+    macro_rules! test_ops {
+        ($fn:ident, $sy:tt, $r1:expr, $r2:expr) => {
+            #[test]
+            fn $fn() {
+                let res = 1000.0 $sy Percentage::new(10);
+                assert_eq!(res, $r1);
+                let res = Percentage::new(10) $sy 1000.0;
+                assert_eq!(res, $r2);
+            }
+        }
     }
 
-    #[test]
-    fn sub_t() {
-        let res = 1000.0 - Percentage::new_unchecked(10);
-        assert_eq!(res, 900.0);
-    }
+    test_ops!(add, +, 1100.0, 1100.0);
+    test_ops!(sub, -, 900.0, 900.0);
 
     #[test]
     fn mul_t() {
-        let res = 1000.0 * Percentage::new_unchecked(10);
+        let res = 1000.0 * Percentage::new(10);
         assert_eq!(res, 100.0);
     }
 
     #[test]
     fn div_t() {
-        let res = 1000.0 / Percentage::new_unchecked(10);
+        let res = 1000.0 / Percentage::new(10);
         assert_eq!(res, 10000.0);
     }
 }

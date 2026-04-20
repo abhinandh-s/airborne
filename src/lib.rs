@@ -1,8 +1,8 @@
-// //! # airborne
-// //!
-// //!  A Heavily-Typed Rust Statistics & Finance Library
-// //!
-// //!
+//! # airborne
+//!
+//!  A Heavily-Typed Rust Statistics & Finance Library
+//!
+//!
 // //! ## example
 // //!
 // //! ### ``DataSet`` construction

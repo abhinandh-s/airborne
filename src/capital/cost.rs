@@ -105,10 +105,10 @@ mod test {
     #[test]
     fn kd_t_01() {
         let mut debt = DebtCapital {
-            interest: Percentage::new_unchecked(10),
+            interest: Percentage::new(10),
             amount: 100_000.0,
             type_is: Type::Irredeemable,
-            tax_rate: Some(Percentage::new_unchecked(35)),
+            tax_rate: Some(Percentage::new(35)),
             ..Default::default()
         };
 
@@ -134,12 +134,12 @@ mod test {
     #[test]
     fn kd_t_02() {
         let debt = DebtCapital {
-            interest: Percentage::new_unchecked(12),
+            interest: Percentage::new(12),
             amount: 100.0,
             market_price: Some(95.0),
             type_is: Type::Irredeemable,
-            tax_rate: Some(Percentage::new_unchecked(35)),
-            issued_at: IssuedAt::Premium(Percentage::new_unchecked(5)),
+            tax_rate: Some(Percentage::new(35)),
+            issued_at: IssuedAt::Premium(Percentage::new(5)),
             ..Default::default()
         };
 
@@ -150,10 +150,10 @@ mod test {
     #[test]
     fn kd_t_03() {
         let mut debt = DebtCapital {
-            interest: Percentage::new_unchecked(15),
+            interest: Percentage::new(15),
             amount: 100.0,
             type_is: Type::Irredeemable,
-            tax_rate: Some(Percentage::new_unchecked(35)),
+            tax_rate: Some(Percentage::new(35)),
             ..Default::default()
         };
 
