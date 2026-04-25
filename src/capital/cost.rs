@@ -2,7 +2,7 @@ use crate::compute::ComputeFloat;
 use crate::compute::N;
 use crate::types::Percentage;
 
-// TODO: write docs
+/// Cost of credit
 pub fn cost_of_credit(d: Percentage, dd: u32, ad: u32) -> f64 {
     let d = d.as_decimal();
     let t = (ad - dd) as f64;

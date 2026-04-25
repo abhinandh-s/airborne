@@ -1,2 +1,2 @@
-pub mod annuity;
+mod annuity;
 pub mod ratios;

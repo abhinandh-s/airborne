@@ -11,13 +11,13 @@ fn is_finite(v: f64, index: usize) -> Result<N> {
     Ok(nf64!(v))
 }
 
-pub fn fv_single(pv: f64, rate: f64, periods: u32) -> Result<f64> {
+fn fv_single(pv: f64, rate: f64, periods: u32) -> Result<f64> {
     check_bound(rate, 0.0, 1.0)?;
     let fv = nf64!(pv) * (N::cf_one() + nf64!(rate)).cf_powf(periods as f64);
     Ok(fv.cf_to_f64())
 }
 
-pub fn fv_single_unchecked(pv: f64, rate: f64, periods: u32) -> f64 {
+fn fv_single_unchecked(pv: f64, rate: f64, periods: u32) -> f64 {
     let fv = nf64!(pv) * (N::cf_one() + nf64!(rate)).cf_powf(periods as f64);
     fv.cf_to_f64()
 }

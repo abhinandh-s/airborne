@@ -1,4 +1,4 @@
-pub trait NonDiscountedCashFlowTechniques: IntoIterator<Item = f64> {
+trait NonDiscountedCashFlowTechniques: IntoIterator<Item = f64> {
     fn payback_period(initial_investment: impl Into<f64>, annual_cf: impl Into<f64>) -> f64 {
         initial_investment.into() / annual_cf.into()
     }
@@ -8,7 +8,7 @@ pub trait NonDiscountedCashFlowTechniques: IntoIterator<Item = f64> {
     // fn avarage_rate_of_return() -> f64;
 }
 
-pub trait DiscountedCashFlowTechniques {
+trait DiscountedCashFlowTechniques {
     fn npv() -> f64;
     fn pi() -> f64;
     fn irr() -> f64;

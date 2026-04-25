@@ -2,9 +2,18 @@
 name = "airborne"
 version = "0.1.0"
 edition = "2024"
-description = "A heavily-typed, generic Rust statistics library with compile-time Sample/Population semantics."
-keywords    = ["statistics", "math", "generics", "sample", "population"]
-license     = "MIT"
+authors = ["Abhinandh S <abhinandhsuby@proton.me>"]
+description = "A heavily-typed, generic Rust statistics and finance library."
+categories = []
+keywords    = ["statistics", "math", "generics", "sample", "population", "finance", "risk", "capital"]
+homepage = "https://github.com/abhinandh-s/airborne"
+repository = "https://github.com/abhinandh-s/airborne"
+readme = "README.md"
+license = "MIT"
+license_file = "LICENSE"
+
+[badges]
+maintenance = { status = "actively-developed" }
 
 [features]
 default = []

@@ -88,14 +88,13 @@ impl From<Percentage> for f64 {
     }
 }
 
-
 macro_rules! impl_ops {
     ($trait:ident, $fn:ident, $symbol:tt) => {
         impl std::ops::$trait<f64> for Percentage {
             type Output = f64;
 
             fn $fn(self, rhs: f64) -> Self::Output {
-                rhs $symbol (rhs * self.as_decimal())    
+                rhs $symbol (rhs * self.as_decimal())
             }
         }
 
@@ -116,7 +115,7 @@ macro_rules! impl_ops_02 {
             type Output = f64;
 
             fn $fn(self, rhs: f64) -> Self::Output {
-                rhs $symbol self.as_decimal()   
+                rhs $symbol self.as_decimal()
             }
         }
 
@@ -242,8 +241,6 @@ impl Sub for Fraction {
     }
 }
 
-
-
 fn gcd(mut a: u32, mut b: u32) -> u32 {
     while b != 0 {
         a %= b;
@@ -265,6 +262,45 @@ macro_rules! ratio {
     ($first:literal $(: $rest:expr)+ $(,)?  ) => {
         {
             $crate::types::Ratio::new([$first, $($rest),+ ])
+        }
+    }
+}
+
+/// Debits and credits in double-entry bookkeeping are entries
+/// made in account ledgers to record changes in value resulting
+/// from business transactions. A debit entry in an account
+/// represents a transfer of value to that account,
+/// and a credit entry represents a transfer from the account.
+/// Each transaction transfers value from credited accounts to debited accounts
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum EntryType {
+    /// repr Debit entry
+    Debit,
+    /// repr Credit entry
+    Credit,
+}
+
+/// repr Debit entry
+/// alias for EntryType::Debit
+pub const DEBIT: EntryType = crate::types::EntryType::Debit;
+
+/// repr Credit entry
+/// alias for EntryType::Credit
+pub const CREDIT: EntryType = crate::types::EntryType::Credit;
+
+enum AccountType {
+    Asset,
+    Liability,
+    Capital,
+    Expense,
+    Revenue,
+}
+
+impl AccountType {
+    fn balance(&self) -> EntryType {
+        match self {
+            AccountType::Liability | AccountType::Capital | AccountType::Revenue => CREDIT,
+            AccountType::Expense | AccountType::Asset => DEBIT,
         }
     }
 }

@@ -1,13 +1,16 @@
-use std::fmt::Display;
-use std::ops::Deref;
+use crate::DataSet;
+use crate::Marker;
+use crate::Numeric;
+use crate::StatsError;
+use crate::stats::*;
 
 use crate::compute::{ComputeFloat, N, to_n_vec};
 use crate::error::Result;
-use crate::{
-    CentralTendency, DataSet, Dispersion, Marker, Numeric, StatsError, covariance_n, mean_n,
-    std_dev_n, variance_n,
-};
 
+/// # RiskMetrics
+///
+/// Provides methods related to portfolio risk for [`DataSet`].
+/// eg: sharpe ratio, sortino ratio, treynor ratio, etc,.
 pub trait RiskMetrics<T: Numeric, M: Marker> {
     /// # Sharpe ratio
     ///
@@ -32,74 +35,22 @@ pub trait RiskMetrics<T: Numeric, M: Marker> {
     /// ```
     //
     // ref: [Sharpe Ratio](https://corporatefinanceinstitute.com/resources/career-map/sell-side/risk-management/sharpe-ratio-definition-formula/)
-    fn sharpe_ratio(&self, risk_free: f64) -> Result<SharpeResult>;
+    fn sharpe_ratio(&self, risk_free: f64) -> Result<f64>;
+    /// The Sortino ratio measures the risk-adjusted return of an investment asset, portfolio, or strategy.[1] It is a modification of the Sharpe ratio but penalizes only those returns falling below a user-specified target or required rate of return, while the Sharpe ratio penalizes both upside and downside volatility equally. Though both ratios measure an investment's risk-adjusted return, they do so in significantly different ways that will frequently lead to differing conclusions as to the true nature of the investment's return-generating efficiency.
+    ///
+    /// The Sortino ratio is used as a way to compare the risk-adjusted performance of programs with differing risk and return profiles. In general, risk-adjusted returns seek to normalize the risk across programs and then see which has the higher return unit per risk.[2] 
     fn sortino_ratio(&self, rf: f64) -> Result<f64>;
+    /// .
     fn downside_deviation(&self, mar: f64) -> Result<f64>;
+    /// .
     fn beta(&self, benchmark: &DataSet<T, M>) -> Result<f64>;
+    /// .
     fn treynor_ratio(&self, benchmark: &DataSet<T, M>, risk_free: f64) -> Result<f64>;
+    /// .
     fn tracking_error(&self, benchmark: &DataSet<T, M>) -> Result<f64>;
 }
-
-pub struct SharpeResult {
-    pub(crate) value: f64,
-}
-
-impl SharpeResult {
-    pub fn value(&self) -> f64 {
-        self.value
-    }
-}
-
-impl Display for SharpeResult {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "result: {}\n\n## Grading Thresholds\n\nLess than 1: Bad\n1 – 1.99: Adequate/good\n2 – 2.99: Very good\nGreater than 3: Excellent",
-            self.value()
-        )
-    }
-}
-
-impl Deref for SharpeResult {
-    type Target = f64;
-
-    fn deref(&self) -> &Self::Target {
-        &self.value
-    }
-}
-
-macro_rules! impl_result {
-    ($name:ident, $fmt:literal) => {
-        pub struct $name {
-            pub(crate) value: f64,
-        }
-
-        impl $name {
-            pub fn value(&self) -> f64 {
-                self.value
-            }
-        }
-
-        impl std::fmt::Display for $name {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                write!(f, "result: {}\n\n\n{}", self.value(), $fmt)
-            }
-        }
-
-        impl std::ops::Deref for $name {
-            type Target = f64;
-
-            fn deref(&self) -> &Self::Target {
-                &self.value
-            }
-        }
-    };
-}
-
-impl_result!(SortinoResult, "this");
-
 impl<T: Numeric, M: Marker> RiskMetrics<T, M> for DataSet<T, M> {
-    fn sharpe_ratio(&self, risk_free: f64) -> Result<SharpeResult> {
+    fn sharpe_ratio(&self, risk_free: f64) -> Result<f64> {
         if !risk_free.is_finite() {
             return Err(crate::error::StatsError::InvalidRiskFreeRate { rate: risk_free });
         }
@@ -113,9 +64,8 @@ impl<T: Numeric, M: Marker> RiskMetrics<T, M> for DataSet<T, M> {
         let portfolio_ret = N::cf_from_f64(self.mean()?);
         let sharpe = (portfolio_ret - N::cf_from_f64(risk_free)) / N::cf_from_f64(sd);
 
-        Ok(SharpeResult {
-            value: sharpe.cf_to_f64(),
-        })
+        Ok( sharpe.cf_to_f64()
+       )
     }
 
     fn sortino_ratio(&self, rf: f64) -> Result<f64> {
@@ -283,7 +233,7 @@ mod test {
     fn sharpe_t() -> Result<()> {
         let rf = 0.03; // risk free return = 3%
         let series: DataSet<f64> = DataSet::from_iter(ITC.to_vec());
-        let s1 = series.sharpe_ratio(rf)?.value();
+        let s1 = series.sharpe_ratio(rf)?;
         assertion!(
             s1,
             -3.024907069875915,  // f64
@@ -403,3 +353,62 @@ mod test {
 //         $crate::risk_metrics::internal_sharpe(None, $rf, Some($rp), Some($sd))
 //     };
 // }
+// pub struct SharpeResult {
+//     pub(crate) value: f64,
+// }
+//
+// impl SharpeResult {
+//     pub fn value(&self) -> f64 {
+//         self.value
+//     }
+// }
+
+// impl Display for SharpeResult {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         write!(
+//             f,
+//             "result: {}\n\n## Grading Thresholds\n\nLess than 1: Bad\n1 – 1.99: Adequate/good\n2 – 2.99: Very good\nGreater than 3: Excellent",
+//             self.value()
+//         )
+//     }
+// }
+//
+// impl Deref for SharpeResult {
+//     type Target = f64;
+//
+//     fn deref(&self) -> &Self::Target {
+//         &self.value
+//     }
+// }
+//
+// macro_rules! impl_result {
+//     ($name:ident, $fmt:literal) => {
+//         pub struct $name {
+//             pub(crate) value: f64,
+//         }
+//
+//         impl $name {
+//             pub fn value(&self) -> f64 {
+//                 self.value
+//             }
+//         }
+//
+//         impl std::fmt::Display for $name {
+//             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//                 write!(f, "result: {}\n\n\n{}", self.value(), $fmt)
+//             }
+//         }
+//
+//         impl std::ops::Deref for $name {
+//             type Target = f64;
+//
+//             fn deref(&self) -> &Self::Target {
+//                 &self.value
+//             }
+//         }
+//     };
+// }
+//
+// impl_result!(SortinoResult, "this");
+
+

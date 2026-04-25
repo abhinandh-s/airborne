@@ -10,12 +10,12 @@ use crate::compute::N;
 // Ratios
 
 // Ratios - Liquidity
-pub fn current_r(current_assets: impl Into<f64>, current_liabilities: impl Into<f64>) -> f64 {
+pub fn current(current_assets: impl Into<f64>, current_liabilities: impl Into<f64>) -> f64 {
     let current = nf64!(current_assets.into()) / nf64!(current_liabilities.into());
     current.cf_to_f64()
 }
 
-pub fn quick_r(
+pub fn quick(
     current_assets: impl Into<f64>,
     inventory: impl Into<f64>,
     current_liabilities: impl Into<f64>,
@@ -24,13 +24,14 @@ pub fn quick_r(
         .cf_to_f64()
 }
 
-// fn acid_r(cash: impl Into<f64>, inventory: impl Into<f64>, accounts_recievable: impl Into<f64>, current_liabilities: impl Into<f64>) -> f64 {
-//     (cash + inventory + accounts_recievable) / current_liabilities
-// }
-//
-// fn cash_r(cash_and_equivalents: impl Into<f64>, current_liabilities: impl Into<f64>) -> f64 {
-//     cash_and_equivalents / current_liabilities
-// }
+pub fn acid(cash: impl Into<f64>, inventory: impl Into<f64>, accounts_recievable: impl Into<f64>, current_liabilities: impl Into<f64>) -> f64 {
+    let acid = (cash.into() + inventory.into() + accounts_recievable.into()) / current_liabilities.into();
+    acid.cf_to_f64()
+}
+
+pub fn cash(cash_and_equivalents: impl Into<f64>, current_liabilities: impl Into<f64>) -> f64 {
+    (cash_and_equivalents.into() / current_liabilities.into()).cf_to_f64()
+}
 //
 // // Ratios - Profitability
 // fn gross_m(gross_profit: impl Into<f64>, revenue: impl Into<f64>) -> f64 {
