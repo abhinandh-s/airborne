@@ -36,9 +36,9 @@ pub trait RiskMetrics<T: Numeric, M: Marker> {
     //
     // ref: [Sharpe Ratio](https://corporatefinanceinstitute.com/resources/career-map/sell-side/risk-management/sharpe-ratio-definition-formula/)
     fn sharpe_ratio(&self, risk_free: f64) -> Result<f64>;
-    /// The Sortino ratio measures the risk-adjusted return of an investment asset, portfolio, or strategy.[1] It is a modification of the Sharpe ratio but penalizes only those returns falling below a user-specified target or required rate of return, while the Sharpe ratio penalizes both upside and downside volatility equally. Though both ratios measure an investment's risk-adjusted return, they do so in significantly different ways that will frequently lead to differing conclusions as to the true nature of the investment's return-generating efficiency.
+    /// The Sortino ratio measures the risk-adjusted return of an investment asset, portfolio, or strategy. It is a modification of the Sharpe ratio but penalizes only those returns falling below a user-specified target or required rate of return, while the Sharpe ratio penalizes both upside and downside volatility equally. Though both ratios measure an investment's risk-adjusted return, they do so in significantly different ways that will frequently lead to differing conclusions as to the true nature of the investment's return-generating efficiency.
     ///
-    /// The Sortino ratio is used as a way to compare the risk-adjusted performance of programs with differing risk and return profiles. In general, risk-adjusted returns seek to normalize the risk across programs and then see which has the higher return unit per risk.[2]
+    /// The Sortino ratio is used as a way to compare the risk-adjusted performance of programs with differing risk and return profiles. In general, risk-adjusted returns seek to normalize the risk across programs and then see which has the higher return unit per risk.
     fn sortino_ratio(&self, rf: f64) -> Result<f64>;
     /// .
     fn downside_deviation(&self, mar: f64) -> Result<f64>;
