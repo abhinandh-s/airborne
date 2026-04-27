@@ -38,7 +38,7 @@ pub trait RiskMetrics<T: Numeric, M: Marker> {
     fn sharpe_ratio(&self, risk_free: f64) -> Result<f64>;
     /// The Sortino ratio measures the risk-adjusted return of an investment asset, portfolio, or strategy.[1] It is a modification of the Sharpe ratio but penalizes only those returns falling below a user-specified target or required rate of return, while the Sharpe ratio penalizes both upside and downside volatility equally. Though both ratios measure an investment's risk-adjusted return, they do so in significantly different ways that will frequently lead to differing conclusions as to the true nature of the investment's return-generating efficiency.
     ///
-    /// The Sortino ratio is used as a way to compare the risk-adjusted performance of programs with differing risk and return profiles. In general, risk-adjusted returns seek to normalize the risk across programs and then see which has the higher return unit per risk.[2] 
+    /// The Sortino ratio is used as a way to compare the risk-adjusted performance of programs with differing risk and return profiles. In general, risk-adjusted returns seek to normalize the risk across programs and then see which has the higher return unit per risk.[2]
     fn sortino_ratio(&self, rf: f64) -> Result<f64>;
     /// .
     fn downside_deviation(&self, mar: f64) -> Result<f64>;
@@ -64,8 +64,7 @@ impl<T: Numeric, M: Marker> RiskMetrics<T, M> for DataSet<T, M> {
         let portfolio_ret = N::cf_from_f64(self.mean()?);
         let sharpe = (portfolio_ret - N::cf_from_f64(risk_free)) / N::cf_from_f64(sd);
 
-        Ok( sharpe.cf_to_f64()
-       )
+        Ok(sharpe.cf_to_f64())
     }
 
     fn sortino_ratio(&self, rf: f64) -> Result<f64> {
@@ -410,5 +409,3 @@ mod test {
 // }
 //
 // impl_result!(SortinoResult, "this");
-
-

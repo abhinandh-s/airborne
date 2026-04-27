@@ -1,7 +1,10 @@
+use std::collections;
 use std::fmt::Display;
+use std::fs::Permissions;
 use std::ops::Index;
 use std::ops::Sub;
 
+#[repr(transparent)]
 #[derive(Debug, Default, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Percentage(f64);
 
@@ -55,6 +58,7 @@ impl Percentage {
     /// let result = 1000.0 * perc.as_decimal();
     /// assert_eq!(result, 500.0);
     /// ```
+    #[must_use]
     pub fn as_decimal(&self) -> f64 {
         self.0 / 100.0
     }
@@ -88,52 +92,69 @@ impl From<Percentage> for f64 {
     }
 }
 
+// TODO: maybe. Not planned.
+macro_rules! __impl_ops_rev_generic {
+    ($trait:ident, $fn:ident, $symbol:tt, $from:ident, $logic:expr) => {
+        impl std::ops::$trait<f64> for $from {
+            type Output = f64;
+
+            #[allow(clippy::suspicious_arithmetic_impl)]
+            fn $fn(self, rhs: f64) -> Self::Output {
+                let (lhs, rhs) = $logic(self, rhs);
+                rhs $symbol lhs
+            }
+        }
+    }
+}
+
+macro_rules! __impl_ops_generic {
+    ($trait:ident, $fn:ident, $symbol:tt, $from:ident, $logic:expr) => {
+        impl std::ops::$trait<$from> for f64 {
+            type Output = f64;
+
+            #[allow(clippy::suspicious_arithmetic_impl)]
+            fn $fn(self, rhs: $from) -> Self::Output {
+                let (lhs, rhs) = $logic(rhs, self);
+                lhs $symbol rhs
+            }
+        }
+    }
+}
+
 macro_rules! impl_ops {
-    ($trait:ident, $fn:ident, $symbol:tt) => {
-        impl std::ops::$trait<f64> for Percentage {
-            type Output = f64;
-
-            fn $fn(self, rhs: f64) -> Self::Output {
-                rhs $symbol (rhs * self.as_decimal())
-            }
-        }
-
-        impl std::ops::$trait<Percentage> for f64 {
-            type Output = f64;
-
-            fn $fn(self, rhs: Percentage) -> Self::Output {
-                self $symbol (self * rhs.as_decimal())
-            }
-        }
-
-    }
+    (- for $from:ident, $logic:expr) => {
+        __impl_ops_generic!(Sub, sub, -, $from, $logic);
+    };
+    (+ for $from:ident, $logic:expr) => {
+        __impl_ops_generic!(Add, add, +, $from, $logic);
+    };
+    (/ for $from:ident, $logic:expr) => {
+        __impl_ops_generic!(Div, div, /, $from, $logic);
+    };
+    (* for $from:ident, $logic:expr) => {
+        __impl_ops_generic!(Mul, mul, *, $from, $logic);
+    };
 }
 
-macro_rules! impl_ops_02 {
-    ($trait:ident, $fn:ident, $symbol:tt) => {
-        impl std::ops::$trait<f64> for Percentage {
-            type Output = f64;
+impl_ops!(- for Percentage, |lhs: Percentage, rhs: f64| {
+    let lhs = rhs * lhs.as_decimal();
+    (rhs, lhs)
+});
 
-            fn $fn(self, rhs: f64) -> Self::Output {
-                rhs $symbol self.as_decimal()
-            }
-        }
+impl_ops!(+ for Percentage, |lhs: Percentage, rhs: f64| {
+    let lhs = rhs * lhs.as_decimal();
+    (rhs, lhs)
+});
 
-        impl std::ops::$trait<Percentage> for f64 {
-            type Output = f64;
+impl_ops!(/ for Percentage, |lhs: Percentage, rhs: f64| {
+    let lhs = lhs.as_decimal();
+    (rhs, lhs)
+});
 
-            fn $fn(self, rhs: Percentage) -> Self::Output {
-                self $symbol rhs.as_decimal()
-            }
-        }
-
-    }
-}
-
-impl_ops!(Add, add, +);
-impl_ops!(Sub, sub, -);
-impl_ops_02!(Mul, mul, *);
-impl_ops_02!(Div, div, /);
+impl_ops!(* for Percentage, |lhs: Percentage, rhs: f64| {
+    let lhs = lhs.as_decimal();
+    (rhs, lhs)
+});
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Ratio {
@@ -272,12 +293,16 @@ macro_rules! ratio {
 /// represents a transfer of value to that account,
 /// and a credit entry represents a transfer from the account.
 /// Each transaction transfers value from credited accounts to debited accounts
+///
+/// If sorted all `Debit` entries will come first and all `Credit` entries will
+/// comes last (Following the order of enum Items).
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum EntryType {
     /// repr Debit entry
-    Debit,
+    Debit = 0,
     /// repr Credit entry
-    Credit,
+    Credit = 1,
 }
 
 /// repr Debit entry
@@ -288,19 +313,33 @@ pub const DEBIT: EntryType = crate::types::EntryType::Debit;
 /// alias for EntryType::Credit
 pub const CREDIT: EntryType = crate::types::EntryType::Credit;
 
-enum AccountType {
-    Asset,
-    Liability,
-    Capital,
-    Expense,
-    Revenue,
+/// If sorted `Capital` will come first and `Expense` comes last (Following the order of enum Items).
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum AccountType {
+    Capital = 0,
+    Revenue = 1,
+    Liability = 2,
+    Asset = 3,
+    Expense = 4,
 }
 
+/// alias for `AccountType::Asset`
+pub const ASSET: AccountType = AccountType::Asset;
+/// alias for `AccountType::Liability`
+pub const LIABILITY: AccountType = AccountType::Liability;
+/// alias for `AccountType::Capital`
+pub const CAPITAL: AccountType = AccountType::Capital;
+/// alias for `AccountType::Expense`
+pub const EXPENSE: AccountType = AccountType::Expense;
+/// alias for `AccountType::Revenue`
+pub const REVENUE: AccountType = AccountType::Revenue;
+
 impl AccountType {
-    fn balance(&self) -> EntryType {
+    pub fn balance(self) -> EntryType {
         match self {
-            AccountType::Liability | AccountType::Capital | AccountType::Revenue => CREDIT,
-            AccountType::Expense | AccountType::Asset => DEBIT,
+            EXPENSE | ASSET => DEBIT,
+            LIABILITY | CAPITAL | REVENUE => CREDIT,
         }
     }
 }
@@ -334,14 +373,12 @@ mod test {
             fn $fn() {
                 let res = 1000.0 $sy Percentage::new(10);
                 assert_eq!(res, $r1);
-                let res = Percentage::new(10) $sy 1000.0;
-                assert_eq!(res, $r2);
             }
         }
     }
 
     test_ops!(add, +, 1100.0, 1100.0);
-    test_ops!(sub, -, 900.0, 900.0);
+    test_ops!(sub, -, 900.0, -900.0);
 
     #[test]
     fn mul_t() {

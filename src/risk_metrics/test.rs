@@ -16,7 +16,7 @@ fn test_sharpe_ratio_basic() {
     let result = ds.sharpe_ratio(rf).expect("Calculation failed");
 
     // Use *result to get the f64 value from SharpeResult via Deref
-    assert_n_eq!(N::cf_from_f64(*result), 4.89897948556636);
+    assert_n_eq!(N::cf_from_f64(result), 4.89897948556636);
 }
 
 #[test]
@@ -53,13 +53,4 @@ fn test_error_on_invalid_rf() {
         result,
         Err(StatsError::InvalidRiskFreeRate { .. })
     ));
-}
-
-#[test]
-fn test_display_implementation() {
-    let result = SharpeResult { value: 2.5 };
-    let output = format!("{}", result);
-
-    assert!(output.contains("result: 2.5"));
-    assert!(output.contains("Very good"));
 }

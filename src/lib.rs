@@ -24,9 +24,9 @@ pub(crate) mod utils;
 mod risk_metrics;
 pub use risk_metrics::*;
 
-pub mod stats;
-pub mod finance;
 pub mod capital;
+pub mod finance;
+pub mod stats;
 
 pub use error::{Result, StatsError};
 pub use marker::{Marker, Population, Sample};

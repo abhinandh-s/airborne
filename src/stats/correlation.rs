@@ -69,7 +69,8 @@ pub(crate) fn covariance_n(xs: &[N], ys: &[N], dof: N) -> Result<N> {
 
 #[cfg(test)]
 mod test {
-    use crate::{Correlation, DataSet, Sample};
+    use crate::stats::correlation::Correlation;
+    use crate::{DataSet, Sample};
 
     #[test]
     fn covariance_t() {

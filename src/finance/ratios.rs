@@ -24,8 +24,14 @@ pub fn quick(
         .cf_to_f64()
 }
 
-pub fn acid(cash: impl Into<f64>, inventory: impl Into<f64>, accounts_recievable: impl Into<f64>, current_liabilities: impl Into<f64>) -> f64 {
-    let acid = (cash.into() + inventory.into() + accounts_recievable.into()) / current_liabilities.into();
+pub fn acid(
+    cash: impl Into<f64>,
+    inventory: impl Into<f64>,
+    accounts_recievable: impl Into<f64>,
+    current_liabilities: impl Into<f64>,
+) -> f64 {
+    let acid =
+        (cash.into() + inventory.into() + accounts_recievable.into()) / current_liabilities.into();
     acid.cf_to_f64()
 }
 

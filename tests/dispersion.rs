@@ -1,4 +1,5 @@
-use airborne::{DataSet, Dispersion};
+use airborne::DataSet;
+use airborne::stats::Dispersion;
 
 #[test]
 fn name() {
