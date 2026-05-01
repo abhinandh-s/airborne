@@ -1,3 +1,13 @@
+//! Fully generic ratio computation.
+
+use std::ops::Add;
+use std::ops::Div;
+use std::ops::Mul;
+use std::ops::Sub;
+
+use num_traits::Float;
+use num_traits::One;
+
 // use chrono::{NaiveDate};
 use crate::compute::ComputeFloat;
 use crate::compute::N;
@@ -10,149 +20,255 @@ use crate::compute::N;
 // Ratios
 
 // Ratios - Liquidity
-pub fn current(current_assets: impl Into<f64>, current_liabilities: impl Into<f64>) -> f64 {
-    let current = nf64!(current_assets.into()) / nf64!(current_liabilities.into());
-    current.cf_to_f64()
+pub fn current<C>(current_assets: C, current_liabilities: C) -> C
+where
+    C: Div<Output = C>,
+{
+    current_assets / current_liabilities
 }
 
-pub fn quick(
-    current_assets: impl Into<f64>,
-    inventory: impl Into<f64>,
-    current_liabilities: impl Into<f64>,
-) -> f64 {
-    ((nf64!(current_assets.into()) - nf64!(inventory.into())) / nf64!(current_liabilities.into()))
-        .cf_to_f64()
+#[test]
+fn current_ratio_test() {
+    let c_01 = current(2.0, 4.0);
+    assert_eq!(c_01, 0.5);
+    let n1 = nf64!(300.0000);
+    let n2 = nf64!(400.000);
+    let c_02 = current(n1, n2);
+    assert_eq!(c_02, nf64!(0.75));
 }
 
-pub fn acid(
-    cash: impl Into<f64>,
-    inventory: impl Into<f64>,
-    accounts_recievable: impl Into<f64>,
-    current_liabilities: impl Into<f64>,
-) -> f64 {
-    let acid =
-        (cash.into() + inventory.into() + accounts_recievable.into()) / current_liabilities.into();
-    acid.cf_to_f64()
+pub fn quick<C>(current_assets: C, inventory: C, current_liabilities: C) -> C
+where
+    C: Div<Output = C> + Sub<Output = C>,
+{
+    (current_assets - inventory) / current_liabilities
 }
 
-pub fn cash(cash_and_equivalents: impl Into<f64>, current_liabilities: impl Into<f64>) -> f64 {
-    (cash_and_equivalents.into() / current_liabilities.into()).cf_to_f64()
+pub fn acid<C>(cash: C, inventory: C, accounts_recievable: C, current_liabilities: C) -> C
+where
+    C: Div<Output = C> + Add<Output = C>,
+{
+    (cash + inventory + accounts_recievable) / current_liabilities
+}
+
+pub fn cash<C>(cash_and_equivalents: C, current_liabilities: C) -> C
+where
+    C: Div<Output = C>,
+{
+    (cash_and_equivalents / current_liabilities)
 }
 //
-// // Ratios - Profitability
-// fn gross_m(gross_profit: impl Into<f64>, revenue: impl Into<f64>) -> f64 {
-//     gross_profit / revenue
-// }
-//
-// fn operating_m(operating_income: impl Into<f64>, revenue: impl Into<f64>) -> f64 {
-//     operating_income / revenue
-// }
-//
-// fn net_m(net_income: impl Into<f64>, revenue: impl Into<f64>) -> f64 {
-//     net_income / revenue
-// }
-//
-// fn r_o_a(net_income: impl Into<f64>, total_assets: impl Into<f64>) -> f64 {
-//     net_income / total_assets
-// }
-//
-// fn r_o_e(net_income: impl Into<f64>, shareholders_equity: impl Into<f64>) -> f64 {
-//     net_income / shareholders_equity
-// }
-//
-//
-// // Ratios - Leverage
-// fn d_t_e(total_debt: impl Into<f64>, shareholders_equity: impl Into<f64>) -> f64 {
-//     total_debt / shareholders_equity
-// }
-//
-// fn d_r(total_debt: impl Into<f64>, total_assets: impl Into<f64>) -> f64 {
-//     total_debt / total_assets
-// }
-//
-// fn ebit_i_c(ebit: impl Into<f64>, interest_expense: impl Into<f64>) -> f64 {
-//     ebit / interest_expense
-// }
-//
-// // Ratios - Activity
-// fn inv_t(cost_of_goods_sold: impl Into<f64>, average_inventory: impl Into<f64>) -> f64 {
-//     cost_of_goods_sold / average_inventory
-// }
-//
-// fn rec_t(revenue: impl Into<f64>, average_accounts_receivable: impl Into<f64>) -> f64 {
-//     revenue / average_accounts_receivable
-// }
-//
-// fn a_t(revenue: impl Into<f64>, total_assets: impl Into<f64>) -> f64 {
-//     revenue / total_assets
-// }
-//
-//
-// // Ratios - Valuation
-// fn p_t_e(share_price: impl Into<f64>, earnings_per_share: impl Into<f64>) -> f64 {
-//     share_price / earnings_per_share
-// }
-//
-// fn p_t_b(share_price: impl Into<f64>, book_value_per_share: impl Into<f64>) -> f64 {
-//     share_price / book_value_per_share
-// }
-//
-// fn div_y(annual_dividends_per_share: impl Into<f64>, share_price: impl Into<f64>) -> f64 {
-//     annual_dividends_per_share / share_price
-// }
-//
-//
-// // Build Ups
-//
-// // Build Up - FCFF
-//
-// fn fcff_ni(net_income: impl Into<f64>, non_cash_charges: impl Into<f64>, interest: impl Into<f64>, tax_rate: impl Into<f64>, capex: impl Into<f64>, change_in_working_capital: impl Into<f64>,) -> f64 {
-//     net_income + non_cash_charges + (interest * (1.0 - tax_rate)) - capex - change_in_working_capital
-// }
-//
-// fn fcff_cfo(cfo: impl Into<f64>, interest_expense: impl Into<f64>, tax_rate: impl Into<f64>, capex: impl Into<f64>) -> f64 {
-//     cfo + interest_expense * (1.0 - tax_rate) - capex
-// }
-//
-// fn fcff_ebit(ebit: impl Into<f64>, tax_rate: impl Into<f64>, depreciation: impl Into<f64>, capex: impl Into<f64>, change_in_working_capital: impl Into<f64>) -> f64 {
-//     ebit * (1.0 - tax_rate) + depreciation - capex - change_in_working_capital
-// }
-//
-// fn fcff_ebitda(ebitda: impl Into<f64>, tax_rate: impl Into<f64>, depreciation: impl Into<f64>, capex: impl Into<f64>, change_in_working_capital: impl Into<f64>) -> f64 {
-//      (ebitda * (1.0 - tax_rate)) + (depreciation * (1.0 - tax_rate)) - capex - change_in_working_capital
-// }
-//
-// // Build Up - WACC
-// fn wacc_coe(coe: impl Into<f64>, we: impl Into<f64>, tax_rate: impl Into<f64>, cod: impl Into<f64>, wd: impl Into<f64>, cop: impl Into<f64>, wp: impl Into<f64>) -> f64 {
-//     (coe * we) + (cop * wp) + ((1.0 - tax_rate) * cod * wd)
-// }
-//
-// fn coe(rfr: impl Into<f64>, equity_beta: impl Into<f64>, mrp: impl Into<f64>) -> f64 {
-//     rfr + (equity_beta * mrp)
-// }
-//
-// fn wacc_beta(equity_beta: impl Into<f64>, rfr: impl Into<f64>, mrp: impl Into<f64>, we: impl Into<f64>, tax_rate: impl Into<f64>, cod: impl Into<f64>, wd: impl Into<f64>, cop: impl Into<f64>, wp: impl Into<f64>) -> f64 {
-//     ((rfr + (equity_beta * mrp)) * we) + (cop * wp) + ((1.0 - tax_rate) * cod * wd)
-// }
-//
-// fn mrp(equity_market_return: impl Into<f64>, rfr: impl Into<f64>) -> f64 {
-//     equity_market_return - rfr
-// }
-//
-// fn equity_beta(equity: impl Into<f64>, debt: impl Into<f64>, asset_beta: impl Into<f64>, tax_rate: impl Into<f64>) -> f64 {
-//     asset_beta * ( 1.0 + ((debt / equity) * ( 1.0 - tax_rate)))
-// }
-//
-// fn asset_beta(equity: impl Into<f64>, debt: impl Into<f64>, equity_beta: impl Into<f64>, tax_rate: impl Into<f64>) -> f64 {
-//     equity_beta / ( 1.0 + ((debt / equity) * ( 1.0 - tax_rate)))
-// }
-//
+// Ratios - Profitability
+fn gross_m<C>(gross_profit: C, revenue: C) -> C
+where
+    C: Div<Output = C>,
+{
+    gross_profit / revenue
+}
+
+fn operating_m<C>(operating_income: C, revenue: C) -> C
+where
+    C: Div<Output = C>,
+{
+    operating_income / revenue
+}
+
+fn net_m<C>(net_income: C, revenue: C) -> C
+where
+    C: Div<Output = C>,
+{
+    net_income / revenue
+}
+
+fn r_o_a<C>(net_income: C, total_assets: C) -> C
+where
+    C: Div<Output = C>,
+{
+    net_income / total_assets
+}
+
+fn r_o_e<C>(net_income: C, shareholders_equity: C) -> C
+where
+    C: Div<Output = C>,
+{
+    net_income / shareholders_equity
+}
+
+// Ratios - Leverage
+fn d_t_e<C>(total_debt: C, shareholders_equity: C) -> C
+where
+    C: Div<Output = C>,
+{
+    total_debt / shareholders_equity
+}
+
+fn d_r<C>(total_debt: C, total_assets: C) -> C
+where
+    C: Div<Output = C>,
+{
+    total_debt / total_assets
+}
+
+fn ebit_i_c<C>(ebit: C, interest_expense: C) -> C
+where
+    C: Div<Output = C>,
+{
+    ebit / interest_expense
+}
+
+// Ratios - Activity
+fn inv_t<C>(cost_of_goods_sold: C, average_inventory: C) -> C
+where
+    C: Div<Output = C>,
+{
+    cost_of_goods_sold / average_inventory
+}
+
+fn rec_t<C>(revenue: C, average_accounts_receivable: C) -> C
+where
+    C: Div<Output = C>,
+{
+    revenue / average_accounts_receivable
+}
+
+fn a_t<C>(revenue: C, total_assets: C) -> C
+where
+    C: Div<Output = C>,
+{
+    revenue / total_assets
+}
+
+// Ratios - Valuation
+fn p_t_e<C>(share_price: C, earnings_per_share: C) -> C
+where
+    C: Div<Output = C>,
+{
+    share_price / earnings_per_share
+}
+
+fn p_t_b<C>(share_price: C, book_value_per_share: C) -> C
+where
+    C: Div<Output = C>,
+{
+    share_price / book_value_per_share
+}
+
+fn div_y<C>(annual_dividends_per_share: C, share_price: C) -> C
+where
+    C: Div<Output = C>,
+{
+    annual_dividends_per_share / share_price
+}
+
+// Build Ups
+
+// Build Up - FCFF
+
+fn fcff_ni<C>(
+    net_income: C,
+    non_cash_charges: C,
+    interest: C,
+    tax_rate: C,
+    capex: C,
+    change_in_working_capital: C,
+) -> C
+where
+    C: Mul<Output = C> + Add<Output = C> + Sub<Output = C> + One,
+{
+    net_income + non_cash_charges + (interest * (C::one() - tax_rate))
+        - capex
+        - change_in_working_capital
+}
+
+fn fcff_cfo<C>(cfo: C, interest_expense: C, tax_rate: C, capex: C) -> C
+where
+    C: Mul<Output = C> + Add<Output = C> + Sub<Output = C> + One,
+{
+    cfo + interest_expense * (C::one() - tax_rate) - capex
+}
+
+fn fcff_ebit<C>(ebit: C, tax_rate: C, depreciation: C, capex: C, change_in_working_capital: C) -> C
+where
+    C: Mul<Output = C> + Add<Output = C> + Sub<Output = C> + One,
+{
+    ebit * (C::one() - tax_rate) + depreciation - capex - change_in_working_capital
+}
+
+fn fcff_ebitda<C>(
+    ebitda: C,
+    tax_rate: C,
+    depreciation: C,
+    capex: C,
+    change_in_working_capital: C,
+) -> C
+where
+    C: Mul<Output = C> + Add<Output = C> + Sub<Output = C> + One + Copy,
+{
+    (ebitda * (C::one() - tax_rate)) + (depreciation * (C::one() - tax_rate))
+        - capex
+        - change_in_working_capital
+}
+
+// Build Up - WACC
+fn wacc_coe<C>(coe: C, we: C, tax_rate: C, cod: C, wd: C, cop: C, wp: C) -> C
+where
+    C: Mul<Output = C> + Add<Output = C> + Sub<Output = C> + One,
+{
+    (coe * we) + (cop * wp) + ((C::one() - tax_rate) * cod * wd)
+}
+
+fn coe<C>(rfr: C, equity_beta: C, mrp: C) -> C
+where
+    C: Mul<Output = C> + Add<Output = C>,
+{
+    rfr + (equity_beta * mrp)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn wacc_beta<C>(
+    equity_beta: C,
+    rfr: C,
+    mrp: C,
+    we: C,
+    tax_rate: C,
+    cod: C,
+    wd: C,
+    cop: C,
+    wp: C,
+) -> C
+where
+    C: Mul<Output = C> + Add<Output = C> + Sub<Output = C> + One,
+{
+    ((rfr + (equity_beta * mrp)) * we) + (cop * wp) + ((C::one() - tax_rate) * cod * wd)
+}
+
+fn mrp<C>(equity_market_return: C, rfr: C) -> C
+where
+    C: Sub<Output = C>,
+{
+    equity_market_return - rfr
+}
+
+fn equity_beta<C>(equity: C, debt: C, asset_beta: C, tax_rate: C) -> C
+where
+    C: Mul<Output = C> + Div<Output = C> + Add<Output = C> + Sub<Output = C> + One,
+{
+    asset_beta * (C::one() + ((debt / equity) * (C::one() - tax_rate)))
+}
+
+fn asset_beta<C>(equity: C, debt: C, equity_beta: C, tax_rate: C) -> C
+where
+    C: Mul<Output = C> + Div<Output = C> + Add<Output = C> + Sub<Output = C> + One,
+{
+    equity_beta / (C::one() + ((debt / equity) * (C::one() - tax_rate)))
+}
+
 // // Time Value of Money
 //
 //
 // // Time Value of Money - XNPV
 // // assumes that the first outflow is at t=0
-// fn xnpv(cashflows: Vec<(f64, &str)>, discount_rate: impl Into<f64>) -> f64 {
+// fn xnpv(cashflows: Vec<(f64, &str)>, discount_rate: C) -> C where C: Div<Output = C>, {
 //     let mut present_value = 0.0;
 //
 //     // Parse the date of the first cash flow to use as the start date
@@ -169,7 +285,7 @@ pub fn cash(cash_and_equivalents: impl Into<f64>, current_liabilities: impl Into
 // }
 //
 // // Time Value of Money - XIRR
-// fn xirr(cashflows: Vec<(f64, &str)>) -> f64 {
+// fn xirr(cashflows: Vec<(f64, &str)>) -> C where C: Div<Output = C>, {
 //     let mut rate = 0.10; // Initial guess of 10%
 //     let tolerance = 1e-6;
 //     let max_iterations = 10000;
@@ -193,7 +309,7 @@ pub fn cash(cash_and_equivalents: impl Into<f64>, current_liabilities: impl Into
 // // Valuation Models
 //
 // // Valuation Models - Gordon Growth Model - One Phase
-// fn ggm_p1(cashflow_0: impl Into<f64>, required_rate_of_return: impl Into<f64>, growth_rate: impl Into<f64>) -> Option<f64> {
+// fn ggm_p1(cashflow_0: C, required_rate_of_return: C, growth_rate: C) -> Option<f64> {
 //     if required_rate_of_return <= growth_rate {
 //         // Return None if the required rate of return is not greater than the growth rate to avoid division by zero or negative denominator
 //         return None;
@@ -204,7 +320,7 @@ pub fn cash(cash_and_equivalents: impl Into<f64>, current_liabilities: impl Into
 // }
 //
 // // Valuation Models - Gordon Growth Model - Two Phase
-// fn ggm_p2(cashflow_0: impl Into<f64>, required_rate_of_return: impl Into<f64>, growth_rate_1: impl Into<f64>, growth_rate_2: impl Into<f64>, periods: u32) -> Option<f64> {
+// fn ggm_p2(cashflow_0: C, required_rate_of_return: C, growth_rate_1: C, growth_rate_2: C, periods: u32) -> Option<f64> {
 //     if required_rate_of_return <= growth_rate_2 {
 //         // Return None if the required rate of return is not greater than the growth rate to avoid division by zero or negative denominator
 //         return None;
@@ -229,19 +345,19 @@ pub fn cash(cash_and_equivalents: impl Into<f64>, current_liabilities: impl Into
 // // Black-Sholes-Merton
 //
 // // Black-Sholes-Merton - function to calculate N(d1) and N(d2)
-// fn calc_nd(d: impl Into<f64>) -> f64 {
+// fn calc_nd(d: C) -> C where C: Div<Output = C>, {
 //     let normal = Normal::new(0.0, 1.0).unwrap();
 //     normal.cdf(d)
 // }
 //
 // // Black-Scholes-Merton - function for call and put values
 // fn bsm(
-//     s: impl Into<f64>,       // Current stock price
-//     k: impl Into<f64>,       // Option strike price
-//     t: impl Into<f64>,       // Time to expiration in years
-//     r: impl Into<f64>,       // Annual Risk-free interest rate
-//     sigma: impl Into<f64>,   // Annual Volatility
-//     q: impl Into<f64>
+//     s: C,       // Current stock price
+//     k: C,       // Option strike price
+//     t: C,       // Time to expiration in years
+//     r: C,       // Annual Risk-free interest rate
+//     sigma: C,   // Annual Volatility
+//     q: C
 // ) -> (f64, f64, f64, f64) {
 //     let d1 = (s.ln() - k.ln() + (r - q + sigma.powi(2) / 2.0) * t) / (sigma * t.sqrt());
 //     let d2 = d1 - sigma * t.sqrt();
