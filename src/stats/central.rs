@@ -17,6 +17,11 @@
 // }
 // ```
 
+use std::iter::Sum;
+
+use num_traits::Float;
+use num_traits::FromPrimitive;
+
 use crate::compute::{ComputeFloat, N};
 use crate::error::Result;
 use crate::{DataSet, Marker, Numeric};
@@ -67,6 +72,24 @@ impl<T: Numeric, M: Marker> CentralTendency for DataSet<T, M> {
 pub(crate) fn mean_n(series: &[N]) -> N {
     let sum = N::cf_sum(series.iter().copied());
     sum / N::cf_from_usize(series.len())
+}
+
+pub fn mean<T, I>(iterable: I) -> T
+where
+    I: IntoIterator<Item = T>,
+    I::IntoIter: ExactSizeIterator,
+    T: Float + Sum + FromPrimitive,
+{
+    let iter = iterable.into_iter();
+    let count = iter.len();
+
+    // If the iterator is empty, return NaN to avoid division by zero
+    if count == 0 {
+        return T::nan();
+    }
+
+    let sum: T = iter.sum();
+    sum / T::from_usize(count).unwrap()
 }
 
 #[cfg(test)]

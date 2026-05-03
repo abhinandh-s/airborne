@@ -5,7 +5,6 @@ use std::ops::Div;
 use std::ops::Mul;
 use std::ops::Sub;
 
-use num_traits::Float;
 use num_traits::One;
 
 // use chrono::{NaiveDate};
