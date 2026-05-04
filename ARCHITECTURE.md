@@ -63,6 +63,8 @@ let v = data.variance();
 let cv = data.covariance();
 ```
 
+> [!NOTE]
+> trait methods availabe under `Vec`, `[T]` or any other type which impl Deref to slice, assumes its `Population`.
 
 ### test coverage
 

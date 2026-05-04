@@ -5,6 +5,9 @@ use crate::compute::N;
 /// All errors that can arise from statistical or financial computations.
 #[derive(Debug, Error, Clone, PartialEq)]
 pub enum StatsError {
+    #[error("function tried to divide a number by `0`")]
+    DivideByZero,
+
     #[error("iterator is empty")]
     EmptyIterator,
 
