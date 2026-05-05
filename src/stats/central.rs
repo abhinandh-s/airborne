@@ -30,29 +30,29 @@ use crate::{DataSet, Marker, Numeric};
 
 pub trait CentralTendency {
     type Output;
-    // /// # Arithmetic mean
-    // ///
-    // /// **formula**: `(x̅ ) = Σxi/ n`. ie, (sum of values / number of values)
-    // ///
-    // /// ## Example
-    // ///
-    // /// ```rust
-    // /// use airborne::DataSet;
-    // /// use crate::airborne::CentralTendency;
-    // ///
-    // /// let data: DataSet<f64> = DataSet::new([10.0, 20.0, 30.0]).unwrap();
-    // /// let result = data.mean();
-    // ///
-    // /// assert_eq!(result, Ok(20.0));
-    // /// ```
-    // ///
-    // /// # Error
-    // ///
-    // /// returns error if value in data set
-    // ///     1. is finite
-    // ///     2. can't be convert to f64
-    // //
-    // // ref: https://en.wikipedia.org/wiki/Arithmetic_mean
+    /// # Arithmetic mean
+    ///
+    /// **formula**: `(x̅ ) = Σxi/ n`. ie, (sum of values / number of values)
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// use airborne::DataSet;
+    /// use airborne::stats::CentralTendency;
+    ///
+    /// let data: DataSet<f64> = DataSet::try_from([10.0, 20.0, 30.0]).unwrap();
+    /// let result = data.mean();
+    ///
+    /// assert_eq!(result, Ok(20.0));
+    /// ```
+    ///
+    /// # Error
+    ///
+    /// returns error if value in data set
+    ///     1. is finite
+    ///     2. can't be convert to f64
+    //
+    // ref: https://en.wikipedia.org/wiki/Arithmetic_mean
     fn mean(&self) -> Result<Self::Output>;
 }
 
@@ -99,6 +99,7 @@ pub(crate) fn mean_n(series: &[N]) -> N {
 /// let res_03 = test_series_03.mean().unwrap();
 /// let res_04 = test_series_04.mean().unwrap();
 /// let res_05 = test_series_05.mean().unwrap();
+///
 /// assert_eq!(res_01, res_02);
 /// assert_eq!(res_02, res_03);
 /// assert_eq!(res_03, res_04);
@@ -123,24 +124,6 @@ where
         // so, this must not panic!
         Ok(sum / T::from_usize(count).unwrap())
     }
-}
-
-pub fn mean<T, I>(iterable: I) -> T
-where
-    I: IntoIterator<Item = T>,
-    I::IntoIter: ExactSizeIterator,
-    T: Float + Sum + FromPrimitive,
-{
-    let iter = iterable.into_iter();
-    let count = iter.len();
-
-    // If the iterator is empty, return NaN to avoid division by zero
-    if count == 0 {
-        return T::nan();
-    }
-
-    let sum: T = iter.sum();
-    sum / T::from_usize(count).unwrap()
 }
 
 #[cfg(test)]

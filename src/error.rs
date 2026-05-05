@@ -20,6 +20,9 @@ pub enum StatsError {
     #[error("value at index {index} cannot be represented as f64")]
     ConversionError { index: usize },
 
+    #[error("value cannot be represented as T")]
+    ConversionErrorUnchecked,
+
     #[error("encountered NaN or infinite value at index {index}")]
     InvalidValue { index: usize },
 
@@ -86,7 +89,7 @@ pub enum StatsError {
 
 pub type Result<T> = std::result::Result<T, StatsError>;
 
-pub(crate) fn check_empty_set(s: &[N]) -> Result<()> {
+pub(crate) fn check_empty_set<T>(s: &[T]) -> Result<()> {
     if s.is_empty() {
         return Err(StatsError::EmptyIterator);
     }

@@ -1,15 +1,23 @@
+use std::{
+    ops::{AddAssign, Div, Mul, Sub},
+    process::Output,
+};
+
+use num_traits::{FromPrimitive, One, Zero};
+
 use crate::{
-    DataSet,
+    DataSet, Population, Sample, StatsError,
     compute::{ComputeFloat, N},
     error::{Result, check_empty_set},
     marker::Marker,
     numeric::Numeric,
 };
 
-pub trait Dispersion {
-    fn variance(&self) -> Result<f64>;
-    fn std_dev(&self) -> Result<f64>;
-    fn normalize(&self) -> Result<Vec<f64>>;
+pub trait Dispersion<M: Marker = Population> {
+    type Output;
+    fn variance(&self) -> Result<Self::Output>;
+    fn std_dev(&self) -> Result<Self::Output>;
+    fn normalize(&self) -> Result<Vec<Self::Output>>;
 }
 
 // Welford maintains a running mean and running sum-of-squared-deviations in one pass:
@@ -122,20 +130,98 @@ impl<T: Numeric, M: Marker> Dispersion for DataSet<T, M> {
         let res = n.map(N::cf_to_f64).collect();
         Ok(res)
     }
+
+    type Output = f64;
+}
+
+pub fn variance<T, M: Marker>(data: &[T]) -> Result<T>
+where
+    T: Copy
+        + Zero
+        + One
+        + Sub<Output = T>
+        + Div<Output = T>
+        + Mul<Output = T>
+        + AddAssign
+        + FromPrimitive,
+{
+    check_empty_set(data)?;
+
+    let mut n = T::zero();
+    let mut mean = T::zero();
+    let mut m2 = T::zero();
+
+    for &x in data {
+        n += T::one();
+        let delta = x - mean;
+        mean += delta / n;
+        let delta2 = x - mean;
+        m2 += delta * delta2;
+    }
+
+    let count = T::from_usize(data.len()).unwrap();
+    let dof = count - T::from_usize(M::DOF_OFFSET).ok_or(StatsError::ConversionErrorUnchecked)?;
+    Ok(m2 / dof)
+}
+
+impl<T> Dispersion<Population> for [T]
+where
+    T: Copy
+        + Zero
+        + One
+        + Sub<Output = T>
+        + Div<Output = T>
+        + Mul<Output = T>
+        + AddAssign
+        + FromPrimitive,
+{
+    type Output = T;
+
+    fn variance(&self) -> Result<T> {
+        variance::<T, Population>(self)
+    }
+
+    fn std_dev(&self) -> Result<T> {
+        todo!()
+    }
+
+    fn normalize(&self) -> Result<Vec<T>> {
+        todo!()
+    }
+    //     type Output = T;
+    //
+    //     fn mean(&self) -> Result<Self::Output> {
+    //         let count = self.len();
+    //         // If the iterator is empty, return `Err` to avoid division by zero
+    //         if count == 0 {
+    //             return Err(StatsError::EmptyIterator);
+    //         }
+    //
+    //         let sum: T = self.iter().copied().sum();
+    //         // safety: I checked its not `0` & its of same type.
+    //         // so, this must not panic!
+    //         Ok(sum / T::from_usize(count).unwrap())
+    //     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::DataSet;
+    use crate::stats::dispersion::variance;
+    use crate::{DataSet, Sample};
 
     use super::Dispersion;
 
     // https://statisticsbyjim.com/calculators/variance-calculator/
     #[test]
     fn variance_t() {
+        let slice = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(|x| x as f64);
         let data: DataSet<i32> = DataSet::from_iter([1, 2, 3, 4, 5, 6, 7, 8, 9, 0]);
-        let variance = data.variance().unwrap();
-        assert_eq!(variance, 8.250000);
+        let v01 = data.variance().unwrap();
+        assert_eq!(v01, 8.250000);
+
+        let v: f64 = slice.variance().unwrap();
+        variance::<f64, Sample>(slice);
+        assert_eq!(v, 8.25);
     }
 
     // https://www.calculator.net/standard-deviation-calculator.html?numberinputs=10%2C+12%2C+23%2C+23%2C+16%2C+23%2C+21%2C+16&ctype=p&x=Calculate
