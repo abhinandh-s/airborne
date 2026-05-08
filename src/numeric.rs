@@ -5,8 +5,40 @@ use std::process::Output;
 
 use num_traits::ToPrimitive;
 
-pub trait NumExt: NumOps {
-    fn sqrt(self) -> Self;
+use crate::{Result, StatsError};
+
+pub trait NumExt: Sized {
+    fn sqrt(self) -> Result<Self>;
+}
+
+macro_rules! __impl_sqrt {
+    ( $( $type:ty),+ ) => {
+        $(
+            impl NumExt for $type {
+                fn sqrt(self) -> Result<Self> {
+                    Ok(self.isqrt())
+                }
+            }
+        )*
+    };
+}
+
+// TODO: complete this
+__impl_sqrt!(i32, i64, i128, u32, u64, u128);
+
+impl NumExt for f64 {
+    fn sqrt(self) -> Result<Self> {
+        Ok(self.sqrt())
+    }
+}
+
+#[cfg(feature = "precision")]
+impl NumExt for rust_decimal::Decimal {
+    fn sqrt(self) -> Result<Self> {
+        rust_decimal::MathematicalOps::sqrt(&self).ok_or(StatsError::Custom {
+            err: "failed to compute Square Root",
+        })
+    }
 }
 
 pub trait NumOps:
@@ -20,6 +52,7 @@ pub trait NumOps:
     + MulAssign
     + DivAssign
     + PartialEq
+    + PartialOrd
 {
 }
 
@@ -34,6 +67,7 @@ impl<T> NumOps for T where
         + MulAssign
         + DivAssign
         + PartialEq
+        + PartialOrd
 {
 }
 

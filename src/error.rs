@@ -1,5 +1,9 @@
+use std::ops::Sub;
+
+use num_traits::{FromPrimitive, One, Zero};
 use thiserror::Error;
 
+use crate::Marker;
 use crate::compute::N;
 
 /// All errors that can arise from statistical or financial computations.
@@ -87,6 +91,9 @@ pub enum StatsError {
         lower_bound: f64,
         upper_bound: f64,
     },
+
+    #[error("{err}")]
+    Custom { err: &'static str },
 }
 
 pub type Result<T> = std::result::Result<T, StatsError>;
@@ -96,6 +103,26 @@ pub(crate) fn check_empty_set<T>(s: &[T]) -> Result<()> {
         return Err(StatsError::EmptyIterator);
     }
     Ok(())
+}
+
+/// check whether the given slice have enoughh len; and its safe to divide
+///
+/// returns: offset (len - dof_offset)
+///
+pub(crate) fn is_valid_slice<T, M>(s: &[T]) -> Result<T>
+where
+    M: Marker,
+    T: FromPrimitive + Sub<Output = T> + Zero + One + PartialOrd,
+{
+    let len = T::from_usize(s.len()).ok_or(StatsError::ConversionErrorUnchecked)?;
+    let denom = len - M::offset::<T>();
+    if denom == T::zero() {
+        return Err(StatsError::InsufficientData {
+            needed: 1 + M::offset::<usize>(),
+            got: s.len(),
+        });
+    }
+    Ok(denom)
 }
 
 // return true: if passes

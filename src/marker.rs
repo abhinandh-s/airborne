@@ -1,3 +1,5 @@
+use num_traits::{One, Zero};
+
 mod private {
     pub trait Sealed {}
 }
@@ -17,6 +19,8 @@ pub trait Marker: private::Sealed + std::fmt::Debug + Clone + Copy + Send + Sync
     const DOF_OFFSET: usize;
     /// Human-readable label ("Sample" or "Population").
     const NAME: &'static str;
+
+    fn offset<T: Zero + One>() -> T;
 }
 
 /// Marker indicating the dataset is a **sample** from a larger population.
@@ -30,6 +34,10 @@ impl private::Sealed for Sample {}
 impl Marker for Sample {
     const DOF_OFFSET: usize = 1;
     const NAME: &'static str = "Sample";
+
+    fn offset<T: One>() -> T {
+        T::one()
+    }
 }
 
 /// Marker indicating the dataset **is** the entire population.
@@ -43,4 +51,8 @@ impl private::Sealed for Population {}
 impl Marker for Population {
     const DOF_OFFSET: usize = 0;
     const NAME: &'static str = "Population";
+
+    fn offset<T: Zero>() -> T {
+        T::zero()
+    }
 }
