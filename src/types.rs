@@ -1,8 +1,49 @@
 use std::collections;
 use std::fmt::Display;
 use std::fs::Permissions;
+use std::ops::Deref;
 use std::ops::Index;
 use std::ops::Sub;
+
+use num_traits::FromPrimitive;
+use num_traits::Zero;
+
+use crate::Result;
+use crate::StatsError;
+use crate::numeric::NumOps;
+use crate::stats;
+
+pub struct NonZeroNum<T>(T);
+
+impl<T: Zero + NumOps> NonZeroNum<T> {
+    pub fn new(num: T) -> Result<Self> {
+        if num == T::zero() {
+            return Err(crate::StatsError::UnexpectedZero);
+        }
+        Ok(Self(num))
+    }
+}
+
+impl<T: Zero + FromPrimitive + NumOps> NonZeroNum<T> {
+    pub fn from_usize(num: usize) -> Result<Self> {
+        if num == usize::zero() {
+            return Err(crate::StatsError::UnexpectedZero);
+        }
+        let t = T::from_usize(num).ok_or(StatsError::ConversionErrorUnchecked)?;
+        Ok(Self(t))
+    }
+}
+
+impl<T> Deref for NonZeroNum<T>
+where
+    T: NumOps,
+{
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 #[repr(transparent)]
 #[derive(Debug, Default, Clone, Copy, PartialEq, PartialOrd)]

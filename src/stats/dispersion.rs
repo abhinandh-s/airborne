@@ -10,7 +10,7 @@ use crate::{
     compute::{ComputeFloat, N},
     error::{Result, check_empty_set},
     marker::Marker,
-    numeric::Numeric,
+    numeric::{NumExt, NumOps, Numeric},
 };
 
 pub trait Dispersion<M: Marker = Population> {
@@ -67,6 +67,13 @@ fn variance_n_macro_t() -> Result<()> {
     let _v1 = variance_n!(series, dof)?;
     let (_mu, _v) = variance_n!(series, dof, mu)?;
     Ok(())
+}
+
+pub fn std_dev<T, M: Marker>(series: &[T], dof: T) -> Result<T>
+where
+    T: Zero + One + NumExt + FromPrimitive,
+{
+    variance::<T, M>(series).map(|v| v.sqrt())
 }
 
 pub(crate) fn std_dev_n(series: &[N], dof: N) -> Result<(N, N, N)> {
@@ -136,14 +143,7 @@ impl<T: Numeric, M: Marker> Dispersion for DataSet<T, M> {
 
 pub fn variance<T, M: Marker>(data: &[T]) -> Result<T>
 where
-    T: Copy
-        + Zero
-        + One
-        + Sub<Output = T>
-        + Div<Output = T>
-        + Mul<Output = T>
-        + AddAssign
-        + FromPrimitive,
+    T: Zero + One + NumOps + FromPrimitive,
 {
     check_empty_set(data)?;
 
@@ -166,14 +166,7 @@ where
 
 impl<T> Dispersion<Population> for [T]
 where
-    T: Copy
-        + Zero
-        + One
-        + Sub<Output = T>
-        + Div<Output = T>
-        + Mul<Output = T>
-        + AddAssign
-        + FromPrimitive,
+    T: Zero + One + NumOps + FromPrimitive,
 {
     type Output = T;
 

@@ -1,5 +1,41 @@
 #![allow(unused)]
+use std::fmt::Display;
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::process::Output;
+
 use num_traits::ToPrimitive;
+
+pub trait NumExt: NumOps {
+    fn sqrt(self) -> Self;
+}
+
+pub trait NumOps:
+    Copy
+    + Add<Output = Self>
+    + Sub<Output = Self>
+    + Mul<Output = Self>
+    + Div<Output = Self>
+    + AddAssign
+    + SubAssign
+    + MulAssign
+    + DivAssign
+    + PartialEq
+{
+}
+
+impl<T> NumOps for T where
+    T: Copy
+        + Add<Output = Self>
+        + Sub<Output = Self>
+        + Mul<Output = Self>
+        + Div<Output = Self>
+        + AddAssign
+        + SubAssign
+        + MulAssign
+        + DivAssign
+        + PartialEq
+{
+}
 
 pub trait Numeric:
     Copy + PartialOrd + ToPrimitive + std::fmt::Debug + Send + Sync + 'static

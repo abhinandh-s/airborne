@@ -15,6 +15,8 @@ pub(crate) mod compute;
 
 #[macro_use] // pub(crate) but for macros,
 mod dataset;
+use std::process::Output;
+
 pub use dataset::*;
 
 pub mod error;

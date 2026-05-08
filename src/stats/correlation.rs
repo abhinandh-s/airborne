@@ -1,5 +1,10 @@
+use std::iter::Sum;
+
+use num_traits::{FromPrimitive, One, Zero};
+
 use crate::compute::{ComputeFloat, N};
 use crate::error::check_empty_set;
+use crate::numeric::NumOps;
 use crate::{DataSet, Marker, Result};
 use crate::{Numeric, StatsError};
 
@@ -18,7 +23,7 @@ impl<T: Numeric, M: Marker> Correlation<T, M> for DataSet<T, M> {
         let dof = self.dof_denominator_n()?;
         let xs = self.to_n_vec()?;
         let ys = other.to_n_vec()?;
-        Ok(covariance_n(&xs, &ys, dof)?.cf_to_f64())
+        Ok(covariance(&xs, &ys, dof)?.cf_to_f64())
     }
 
     fn pearson(&self, other: &DataSet<T, M>) -> Result<f64> {
@@ -26,12 +31,42 @@ impl<T: Numeric, M: Marker> Correlation<T, M> for DataSet<T, M> {
         let xs = self.to_n_vec()?;
         let ys = other.to_n_vec()?;
 
-        let cov = covariance_n(&xs, &ys, dof)?;
+        let cov = covariance(&xs, &ys, dof)?;
         let (_, _, sx) = std_dev_n(&xs, dof)?;
         let (_, _, sy) = std_dev_n(&ys, dof)?;
         let res = cov / (sx * sy);
         Ok(res.cf_to_f64())
     }
+}
+
+pub fn covariance<T>(xs: &[T], ys: &[T], dof: T) -> Result<T>
+where
+    T: NumOps + Zero + One,
+{
+    if xs.len() != ys.len() {
+        return Err(StatsError::LengthMismatch {
+            len_a: xs.len(),
+            len_b: ys.len(),
+        });
+    }
+
+    check_empty_set(xs)?;
+
+    let mut n = T::zero();
+    let mut mean_x = T::zero();
+    let mut mean_y = T::zero();
+    let mut c2 = T::zero();
+
+    for (&x, &y) in xs.iter().zip(ys) {
+        n += T::one();
+        let dx_old = x - mean_x;
+        mean_x += dx_old / n;
+        let dy_old = y - mean_y;
+        mean_y += dy_old / n;
+        c2 += dx_old * (y - mean_y); // old dx, new mean_y
+    }
+
+    Ok(c2 / dof)
 }
 
 // pub(crate) fn covariance_n(xs: &[N], ys: &[N], dof: N) -> N {
@@ -40,6 +75,7 @@ impl<T: Numeric, M: Marker> Correlation<T, M> for DataSet<T, M> {
 //     let sum = N::cf_sum(xs.iter().zip(ys).map(|(&x, &y)| (x - mu_x) * (y - mu_y)));
 //     sum / dof
 // }
+#[deprecated]
 pub(crate) fn covariance_n(xs: &[N], ys: &[N], dof: N) -> Result<N> {
     if xs.len() != ys.len() {
         return Err(StatsError::LengthMismatch {

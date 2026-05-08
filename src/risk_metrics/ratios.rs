@@ -116,7 +116,7 @@ impl<T: Numeric, M: Marker> RiskMetrics<T, M> for DataSet<T, M> {
         }
 
         let n = self.to_n_vec()?;
-        let mu = mean_n(&n);
+        let mu = mean(&n)?;
         let rf = N::cf_from_f64(risk_free);
         let t = (mu - rf) / b;
 
@@ -154,7 +154,7 @@ impl<T: Numeric, M: Marker> DataSet<T, M> {
         }
         // Fully reuses existing Correlation + Dispersion trait impls.
         // M::DOF_OFFSET propagates through both cov and var and cancels.
-        let cov = covariance_n(&self_n, &benchmark_n, dof)?;
+        let cov = covariance(&self_n, &benchmark_n, dof)?;
         let (_, var_b) = variance_n(&benchmark_n, dof)?;
         if var_b == N::cf_zero() {
             return Err(StatsError::ZeroVariance);
