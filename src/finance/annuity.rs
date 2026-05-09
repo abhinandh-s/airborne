@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::Result;
 use crate::StatsError;
 use crate::compute::ComputeFloat;

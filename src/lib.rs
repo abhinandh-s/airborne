@@ -1,4 +1,3 @@
-#![allow(unused)]
 // #![deny(missing_docs)]
 //! # airborne
 //!
@@ -13,11 +12,10 @@ pub mod types;
 // macros are now available for all modules bellow
 pub(crate) mod compute;
 
-#[macro_use] // pub(crate) but for macros,
-mod dataset;
-use std::process::Output;
+// #[macro_use] // pub(crate) but for macros,
+// mod dataset;
 
-pub use dataset::*;
+// pub use dataset::*;
 
 pub mod error;
 mod marker;
@@ -35,7 +33,6 @@ pub use marker::{Marker, Population, Sample};
 pub use numeric::Numeric;
 
 pub mod prelude {
-    pub use crate::dataset::{DataSet, PopulationData, SampleData};
     pub use crate::error::{Result as StatsResult, StatsError};
     pub use crate::marker::{Population, Sample};
 }

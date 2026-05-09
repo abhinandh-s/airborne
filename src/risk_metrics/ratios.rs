@@ -1,11 +1,11 @@
-use crate::DataSet;
-use crate::Marker;
-use crate::Numeric;
-use crate::StatsError;
-use crate::stats::*;
+use std::iter::Sum;
 
-use crate::compute::{ComputeFloat, N, to_n_vec};
+use num_traits::{FromPrimitive, One, Zero};
+
 use crate::error::Result;
+use crate::numeric::{NumExt, NumOps};
+use crate::stats::{mean, std_dev};
+use crate::{Marker, StatsError};
 
 /// # RiskMetrics
 ///
@@ -52,22 +52,26 @@ pub trait RiskMetrics<T, M: Marker> {
 }
 
 // impl<T: Numeric, M: Marker> RiskMetrics<T, M> for DataSet<T, M> {
-//     fn sharpe_ratio(&self, risk_free: f64) -> Result<f64> {
-//         if !risk_free.is_finite() {
-//             return Err(crate::error::StatsError::InvalidRiskFreeRate { rate: risk_free });
-//         }
-//
-//         let sd = self.std_dev()?;
-//         if sd == 0.0 {
-//             return Err(StatsError::ZeroVariance);
-//         }
-//
-//         // computation only via type N
-//         let portfolio_ret = N::cf_from_f64(self.mean()?);
-//         let sharpe = (portfolio_ret - N::cf_from_f64(risk_free)) / N::cf_from_f64(sd);
-//
-//         Ok(sharpe.cf_to_f64())
-//     }
+pub fn sharpe_ratio<T, M>(data: &[T], risk_free: T) -> Result<T>
+where
+    M: Marker,
+    T: NumOps + NumExt + Zero + One + FromPrimitive + Sum,
+{
+    // if !risk_free.is_finite() {
+    //     return Err(crate::error::StatsError::InvalidRiskFreeRate { rate: risk_free });
+    // }
+
+    let sd = std_dev::<T, M>(data)?;
+    if sd == T::zero() {
+        return Err(StatsError::ZeroVariance);
+    }
+
+    // computation only via type N
+    let portfolio_ret = mean(data)?;
+    let sharpe = (portfolio_ret - risk_free) / sd;
+
+    Ok(sharpe)
+}
 //
 //     fn sortino_ratio(&self, rf: f64) -> Result<f64> {
 //         let d_dev = self.downside_deviation(rf)?;

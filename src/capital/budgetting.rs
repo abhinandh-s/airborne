@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 trait NonDiscountedCashFlowTechniques: IntoIterator<Item = f64> {
     fn payback_period(initial_investment: impl Into<f64>, annual_cf: impl Into<f64>) -> f64 {
         initial_investment.into() / annual_cf.into()

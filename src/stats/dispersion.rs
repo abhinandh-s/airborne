@@ -1,19 +1,21 @@
-use std::{
-    ops::{AddAssign, Div, Mul, Sub},
-    process::Output,
-};
+//! Dispersion (trait)
+//!
+//! 1. variance
+//!    - computed using Welford's algorithm
+//!    - supports both Sample and Population data
+//! 2. standard deviation
+//! 3. normalize
 
 use num_traits::{FromPrimitive, One, Zero};
 
+use crate::Population;
 use crate::{
-    DataSet, Population, Sample, StatsError,
-    compute::{ComputeFloat, N},
     error::{Result, check_empty_set, is_valid_slice},
     marker::Marker,
-    numeric::{NumExt, NumOps, Numeric},
+    numeric::{NumExt, NumOps},
 };
 
-pub trait Dispersion<M: Marker = Population> {
+pub trait Dispersion<M: Marker> {
     type Output;
     fn variance(&self) -> Result<Self::Output>;
     fn std_dev(&self) -> Result<Self::Output>;
@@ -59,6 +61,34 @@ where
     variance::<T, M>(series).map(|x| x.sqrt())?
 }
 
+pub fn normalize<T>(data: &[T]) -> Result<Vec<T>>
+where
+    T: NumOps + Zero,
+{
+    check_empty_set(data)?;
+
+    let mut min = &data[0];
+    let mut max = &data[0];
+
+    for val in data.iter() {
+        if val < min {
+            min = val;
+        }
+        if val > max {
+            max = val;
+        }
+    }
+
+    let rng = *max - *min;
+
+    if rng == T::zero() {
+        return Err(crate::StatsError::ZeroVariance);
+    }
+    let n = data.iter().map(|&x| (x - *min) / rng);
+    let res = n.collect();
+    Ok(res)
+}
+
 impl<T> Dispersion<Population> for [T]
 where
     T: Zero + One + NumOps + NumExt + FromPrimitive,
@@ -97,37 +127,25 @@ where
         let res = n.collect();
         Ok(res)
     }
-    //     type Output = T;
-    //
-    //     fn mean(&self) -> Result<Self::Output> {
-    //         let count = self.len();
-    //         // If the iterator is empty, return `Err` to avoid division by zero
-    //         if count == 0 {
-    //             return Err(StatsError::EmptyIterator);
-    //         }
-    //
-    //         let sum: T = self.iter().copied().sum();
-    //         // safety: I checked its not `0` & its of same type.
-    //         // so, this must not panic!
-    //         Ok(sum / T::from_usize(count).unwrap())
-    //     }
 }
 
 #[cfg(test)]
 mod test {
+    use crate::compute::ComputeFloat;
+    use crate::compute::N;
     use crate::stats::dispersion::variance;
     use crate::stats::std_dev;
-    use crate::{DataSet, Population, Sample};
+    use crate::{Population, Sample};
 
     use super::Dispersion;
 
     // https://statisticsbyjim.com/calculators/variance-calculator/
     #[test]
     fn variance_t() {
-        let slice = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(|x| x as f64);
-        let v: f64 = slice.variance().unwrap();
-        variance::<f64, Sample>(slice);
-        assert_eq!(v, 8.25);
+        let slice = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(|x| nusize!(x));
+        let v = slice.variance().unwrap();
+        let _v = variance::<N, Sample>(slice);
+        assert_eq!(v, nf64!(8.25));
     }
 
     // https://www.calculator.net/standard-deviation-calculator.html?numberinputs=10%2C+12%2C+23%2C+23%2C+16%2C+23%2C+21%2C+16&ctype=p&x=Calculate

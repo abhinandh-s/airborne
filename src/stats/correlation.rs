@@ -1,12 +1,10 @@
-use std::iter::Sum;
 
 use num_traits::{FromPrimitive, One, Zero};
 
-use crate::compute::{ComputeFloat, N};
-use crate::error::{check_empty_set, is_valid_slice};
+use crate::error::is_valid_slice;
 use crate::numeric::{NumExt, NumOps};
-use crate::{DataSet, Marker, Population, Result};
-use crate::{Numeric, StatsError};
+use crate::{Marker, Population, Result};
+use crate::StatsError;
 
 use super::std_dev;
 
@@ -27,7 +25,6 @@ where
     M: Marker,
     T: NumOps + NumExt + Zero + One + FromPrimitive,
 {
-    let dof = is_valid_slice::<T, M>(xs)?;
     let cov = covariance::<T, M>(xs, ys)?;
     let sx = std_dev::<T, M>(xs)?;
     let sy = std_dev::<T, M>(ys)?;
@@ -83,9 +80,9 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::stats::correlation::{Correlation, pearson};
+    use crate::stats::correlation::pearson;
     use crate::stats::covariance;
-    use crate::{DataSet, Sample};
+    use crate::Sample;
 
     #[test]
     fn covariance_t() {

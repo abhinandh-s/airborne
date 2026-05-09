@@ -1,10 +1,11 @@
+#![allow(dead_code)]
+
 use std::ops::Sub;
 
 use num_traits::{FromPrimitive, One, Zero};
 use thiserror::Error;
 
 use crate::Marker;
-use crate::compute::N;
 
 /// All errors that can arise from statistical or financial computations.
 #[derive(Debug, Error, Clone, PartialEq)]

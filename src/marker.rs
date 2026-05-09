@@ -35,7 +35,7 @@ impl Marker for Sample {
     const DOF_OFFSET: usize = 1;
     const NAME: &'static str = "Sample";
 
-    fn offset<T: One>() -> T {
+    fn offset<T: Zero + One>() -> T {
         T::one()
     }
 }
@@ -52,7 +52,7 @@ impl Marker for Population {
     const DOF_OFFSET: usize = 0;
     const NAME: &'static str = "Population";
 
-    fn offset<T: Zero>() -> T {
+    fn offset<T: Zero + One>() -> T {
         T::zero()
     }
 }

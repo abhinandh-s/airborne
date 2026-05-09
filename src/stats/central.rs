@@ -1,17 +1,11 @@
 use std::iter::Sum;
-use std::ops::Div;
 
-use num_traits::Float;
 use num_traits::FromPrimitive;
-use num_traits::Num;
 use num_traits::Zero;
 
-use crate::StatsError;
-use crate::compute::{ComputeFloat, N};
 use crate::error::Result;
 use crate::numeric::NumOps;
 use crate::types::NonZeroNum;
-use crate::{DataSet, Marker, Numeric};
 
 pub trait CentralTendency {
     type Output;
@@ -39,21 +33,6 @@ pub trait CentralTendency {
     //
     // ref: https://en.wikipedia.org/wiki/Arithmetic_mean
     fn mean(&self) -> Result<Self::Output>;
-}
-
-impl<T: Numeric, M: Marker> CentralTendency for DataSet<T, M> {
-    type Output = f64;
-
-    fn mean(&self) -> Result<f64> {
-        let v = self.to_n_vec()?; // <- only conversion in the whole call chain
-        Ok(mean(&v)?.cf_to_f64())
-    }
-}
-
-#[deprecated]
-pub(crate) fn mean_n(series: &[N]) -> N {
-    let sum = N::cf_sum(series.iter().copied());
-    sum / N::cf_from_usize(series.len())
 }
 
 /// # Arithmetic mean
@@ -111,6 +90,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::compute::ComputeFloat;
+    use crate::compute::N;
 
     #[test]
     fn test_mean_basic() {

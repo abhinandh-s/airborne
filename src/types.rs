@@ -1,6 +1,4 @@
-use std::collections;
 use std::fmt::Display;
-use std::fs::Permissions;
 use std::ops::Deref;
 use std::ops::Index;
 use std::ops::Sub;
@@ -11,7 +9,6 @@ use num_traits::Zero;
 use crate::Result;
 use crate::StatsError;
 use crate::numeric::NumOps;
-use crate::stats;
 
 pub struct NonZeroNum<T>(T);
 
